@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'inscription_page.dart'; // We'll create this page too
+import 'package:flutter_svg/flutter_svg.dart';
+import 'inscription_page.dart';
 
 class ConnexionPage extends StatefulWidget {
   const ConnexionPage({Key? key}) : super(key: key);
@@ -29,48 +30,54 @@ class _ConnexionPageState extends State<ConnexionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+
     return Scaffold(
-      backgroundColor: Colors.white, // Outer background
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            padding: const EdgeInsets.all(20.0),
+            width: MediaQuery.of(context).size.width * 0.9,
+            constraints: const BoxConstraints(
+              maxWidth: 400,
+              minHeight: 600, // Added minimum height
+            ),
+            padding: EdgeInsets.all(isSmallScreen ? 15.0 : 20.0),
             decoration: BoxDecoration(
-              color: Colors.grey[900],           // Dark container background
+              color: Colors.grey[900],
               borderRadius: BorderRadius.circular(12.0),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Logo Circle
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: isSmallScreen ? 140 : 160, // Increased from 100/120
+                  height: isSmallScreen ? 140 : 160, // Increased from 100/120
+                  padding: const EdgeInsets.all(25), // Increased from 20
                   decoration: const BoxDecoration(
-                    color: Color(0xFF5D9C88), // Same greenish color
+                    color: Color(0xFF5D9C88),
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
-                    child: Text(
-                      'ShopEase',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/logo.svg',
+                      width: isSmallScreen ? 90 : 110, // Increased from 60/80
+                      height: isSmallScreen ? 90 : 110, // Increased from 60/80
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // "Connexion" Title
-                const Text(
-                  'Connexion',
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Connexion',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 20 : 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -82,7 +89,7 @@ class _ConnexionPageState extends State<ConnexionPage> {
                     labelText: "Nom d'utilisateur",
                     labelStyle: TextStyle(color: Colors.white),
                     filled: true,
-                    fillColor: Colors.white12,  // Slightly lighter field
+                    fillColor: Colors.white12, // Slightly lighter field
                     border: OutlineInputBorder(),
                   ),
                   style: const TextStyle(color: Colors.white),
@@ -108,27 +115,51 @@ class _ConnexionPageState extends State<ConnexionPage> {
                 ElevatedButton(
                   onPressed: _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5D9C88),
+                    backgroundColor: const Color(0xFF2C6149), // Darker green
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  child: const Text('Se connecter'),
+                  child: const Text(
+                    'Se connecter',
+                    style: TextStyle(color: Colors.white, letterSpacing: 1),
+                  ),
                 ),
                 const SizedBox(height: 20),
 
                 // Registration Link
-                Row(
+                Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Vous n'avez pas encore un compte? ",
-                      style: TextStyle(color: Colors.white),
+                    Text(
+                      "Vous n'avez pas encore un compte?",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isSmallScreen ? 12 : 14,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    GestureDetector(
-                      onTap: _navigateToInscription,
-                      child: const Text(
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _navigateToInscription,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        side: const BorderSide(
+                          color: Color(0xFF5D9C88),
+                          width: 2,
+                        ),
+                      ),
+                      child: Text(
                         'Créer un compte',
                         style: TextStyle(
-                          color: Color(0xFF5D9C88),
+                          color: const Color(0xFF5D9C88),
                           fontWeight: FontWeight.bold,
+                          fontSize: isSmallScreen ? 12 : 14,
                         ),
                       ),
                     ),
