@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/screens/inscription_page.dart'; // Make sure this file exists in your project
+import 'package:untitled/screens/connexion_page.dart';
+import 'package:untitled/screens/inscription_page.dart';
 import 'package:untitled/screens/home_page.dart';
+import 'package:untitled/screens/splash_screen.dart'; // Add this import
+
 void main() {
   runApp(const MyApp());
 }
@@ -13,10 +16,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: HomePage(),  // Ensure HomePage() is set here
+      theme: ThemeData(primarySwatch: Colors.green),
+      home: const ConnexionPage(), // Change this line
     );
   }
 }

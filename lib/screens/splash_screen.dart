@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'home_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -16,10 +17,10 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 10)); // Change to 10 seconds
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
+      MaterialPageRoute(builder: (context) => HomePage()),
     );
   }
 
@@ -35,14 +36,12 @@ class _SplashScreenState extends State<SplashScreen> {
             color: Color(0xFF5D9C88),
             shape: BoxShape.circle,
           ),
-          child: const Center(
-            child: Text(
-              'ShopEase',
-              style: TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+          child: Center(
+            child: SvgPicture.asset(
+              'assets/logo.svg', // Make sure the path matches your SVG file
+              width: 80,
+              height: 80,
+              fit: BoxFit.contain,
             ),
           ),
         ),

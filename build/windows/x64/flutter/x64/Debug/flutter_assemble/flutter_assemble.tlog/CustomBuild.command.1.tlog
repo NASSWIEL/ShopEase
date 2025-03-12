@@ -1,0 +1,28 @@
+^C:\USERS\YAHYA\CODING\SHOPEASE\BUILD\WINDOWS\X64\CMAKEFILES\677E7094B1A7E45B31F60CDF59C1A431\FLUTTER_WINDOWS.DLL.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E env FLUTTER_ROOT=D:\flutter PROJECT_DIR=C:\Users\yahya\coding\ShopEase FLUTTER_ROOT=D:\flutter FLUTTER_EPHEMERAL_DIR=C:\Users\yahya\coding\ShopEase\windows\flutter\ephemeral PROJECT_DIR=C:\Users\yahya\coding\ShopEase FLUTTER_TARGET=C:\Users\yahya\coding\ShopEase\lib\main.dart DART_OBFUSCATION=false TRACK_WIDGET_CREATION=true TREE_SHAKE_ICONS=false PACKAGE_CONFIG=C:\Users\yahya\coding\ShopEase\.dart_tool\package_config.json D:/flutter/packages/flutter_tools/bin/tool_backend.bat windows-x64 Debug
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\YAHYA\CODING\SHOPEASE\BUILD\WINDOWS\X64\CMAKEFILES\A042805DE9F0763FB9E657446A80762E\FLUTTER_ASSEMBLE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\YAHYA\CODING\SHOPEASE\WINDOWS\FLUTTER\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/yahya/coding/ShopEase/windows -BC:/Users/yahya/coding/ShopEase/build/windows/x64 --check-stamp-file C:/Users/yahya/coding/ShopEase/build/windows/x64/flutter/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
