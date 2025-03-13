@@ -1,42 +1,122 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:async';
 
-class HomePage extends StatelessWidget {
-  HomePage({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-  // Dummy product list for demonstration purposes.
-  final List<Map<String, String>> products = [
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
+  String _searchQuery = '';
+  bool _isListening = false;
+
+  final List<Map<String, String>> allProducts = [
     {
       'name': 'Product 1',
       'price': '\$25.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
     {
       'name': 'Product 2',
       'price': '\$30.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
     {
       'name': 'Product 3',
       'price': '\$15.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
     {
       'name': 'Product 4',
       'price': '\$45.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
     {
       'name': 'Product 5',
       'price': '\$10.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
     {
       'name': 'Product 6',
       'price': '\$60.00',
-      'imageUrl': 'https://via.placeholder.com/150',
+      'imageUrl': 'https://picsum.photos/400',
     },
   ];
+
+  List<Map<String, String>> get filteredProducts {
+    if (_searchQuery.isEmpty) {
+      return allProducts;
+    }
+    return allProducts
+        .where(
+          (product) => product['name']!.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
+  }
+
+  Future<void> _startListening() async {
+    // Toggle listening state for UI feedback
+    setState(() {
+      _isListening = true;
+    });
+
+    try {
+      // This is a placeholder for the actual API call
+      // In a real implementation, you would:
+      // 1. Record audio
+      // 2. Send it to your speech recognition API
+      // 3. Receive the transcribed text
+
+      // Simulating API delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      // Example of what would happen after successful transcription
+      final String transcribedText =
+          "example product"; // This would come from your API
+
+      setState(() {
+        _searchController.text = transcribedText;
+        _searchQuery = transcribedText;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Speech recognition failed: $e')));
+    } finally {
+      setState(() {
+        _isListening = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +148,6 @@ class HomePage extends StatelessWidget {
           colorFilter: null, // Remove color filter to use SVG's original colors
         ),
         actions: [
-          
           IconButton(
             icon: const Icon(Icons.shopping_cart, color: Color(0xFF5D9C88)),
             onPressed: () {
@@ -91,63 +170,103 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        // Using GridView.builder to display products in a grid layout.
-        child: GridView.builder(
-          itemCount: products.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // Display two products per row
-            mainAxisSpacing: 8.0,
-            crossAxisSpacing: 8.0,
-            childAspectRatio: 0.7, // Adjust to fit your design
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.grey[200],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: Color(0xFF5D9C88)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search products...',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 15),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening ? Colors.red : Color(0xFF5D9C88),
+                      ),
+                      onPressed: _startListening,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return Card(
-              elevation: 2.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GridView.builder(
+                itemCount: filteredProducts.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8.0,
+                  crossAxisSpacing: 8.0,
+                  childAspectRatio: 0.7,
+                ),
+                itemBuilder: (context, index) {
+                  final product = filteredProducts[index];
+                  return Card(
+                    elevation: 2.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Product Image
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12.0),
+                              topRight: Radius.circular(12.0),
+                            ),
+                            child: Image.network(
+                              product['imageUrl']!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        // Product Name
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            product['name']!,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        // Product Price
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text(
+                            product['price']!,
+                            style: const TextStyle(color: Colors.green),
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                      ],
+                    ),
+                  );
+                },
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product Image
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12.0),
-                        topRight: Radius.circular(12.0),
-                      ),
-                      child: Image.network(
-                        product['imageUrl']!,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  // Product Name
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      product['name']!,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  // Product Price
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      product['price']!,
-                      style: const TextStyle(color: Colors.green),
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                ],
-              ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
