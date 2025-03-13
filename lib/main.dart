@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: const ConnexionPage(), // Change this line
+      home: HomePage(), // Change this line
     );
   }
 }
