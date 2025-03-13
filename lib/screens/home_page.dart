@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 
 import 'package:untitled/widgets/product_card.dart';
+import 'package:untitled/screens/panier_page.dart'; // Add this import
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -153,7 +154,11 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.shopping_cart, color: Color(0xFF5D9C88)),
             onPressed: () {
-              // TODO: Implement cart
+              // Navigate to PanierPage when cart icon is clicked
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PanierPage()),
+              );
             },
           ),
         ],
