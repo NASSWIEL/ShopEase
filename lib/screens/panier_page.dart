@@ -39,7 +39,7 @@ class _PanierPageState extends State<PanierPage> {
                     ),
                     SizedBox(height: 20),
                     Text(
-                      'Your cart is empty',
+                      'Votre panier est vide !',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -47,7 +47,7 @@ class _PanierPageState extends State<PanierPage> {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      'Add items to your cart to see them here',
+                      "'Cela semble que vous n'avez pas encore fait votre choix.'",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ],
