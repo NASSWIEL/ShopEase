@@ -31,6 +31,19 @@ class ProductCard extends StatelessWidget {
                 imageUrl,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Display a square placeholder when image fails to load
+                  return Container(
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

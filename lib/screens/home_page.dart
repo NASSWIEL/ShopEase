@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
       'price': '\$29.99',
       'imageUrl': 'https://picsum.photos/400?1',
       'description':
-      'Great for casual mode during sunny weather with this Nike Futura bucket hat.',
+          'Great for casual mode during sunny weather with this Nike Futura bucket hat.',
       'category': 'Hat',
     },
     {
@@ -47,10 +47,10 @@ class _HomePageState extends State<HomePage> {
     }
     return allProducts
         .where(
-          (product) => product['name']!
-          .toLowerCase()
-          .contains(_searchQuery.toLowerCase()),
-    )
+          (product) => product['name']!.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ),
+        )
         .toList();
   }
 
@@ -84,16 +84,17 @@ class _HomePageState extends State<HomePage> {
     try {
       // Simulation de l'appel à une API de reconnaissance vocale
       await Future.delayed(const Duration(seconds: 2));
-      final String transcribedText = "example product"; // Exemple de transcription
+      final String transcribedText =
+          "example product"; // Exemple de transcription
 
       setState(() {
         _searchController.text = transcribedText;
         _searchQuery = transcribedText;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Speech recognition failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Speech recognition failed: $e')));
     } finally {
       setState(() {
         _isListening = false;
@@ -189,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                       icon: Icon(
                         _isListening ? Icons.mic : Icons.mic_none,
                         color:
-                        _isListening ? Colors.red : const Color(0xFF5D9C88),
+                            _isListening ? Colors.red : const Color(0xFF5D9C88),
                       ),
                       onPressed: _startListening,
                     ),
@@ -221,19 +222,24 @@ class _HomePageState extends State<HomePage> {
                         MaterialPageRoute(
                           builder: (context) {
                             // Extraction des informations du produit
-                            final imageUrl = product['imageUrl'] ??
+                            final imageUrl =
+                                product['imageUrl'] ??
                                 'https://via.placeholder.com/400';
                             final category =
                                 product['category'] ?? 'Unknown Category';
                             final articleName =
                                 product['name'] ?? 'Unknown Product';
-                            final price = double.tryParse(
-                              product['price']
-                                  ?.replaceAll(RegExp(r'[^0-9.]'), '') ??
-                                  '0',
-                            ) ??
+                            final price =
+                                double.tryParse(
+                                  product['price']?.replaceAll(
+                                        RegExp(r'[^0-9.]'),
+                                        '',
+                                      ) ??
+                                      '0',
+                                ) ??
                                 0.0;
-                            final description = product['description'] ??
+                            final description =
+                                product['description'] ??
                                 'No description provided.';
 
                             return DetailsArticlePage(
@@ -243,6 +249,7 @@ class _HomePageState extends State<HomePage> {
                                 articleName: articleName,
                                 price: price,
                                 description: description,
+                                imageUrl: imageUrl,
                                 onAddToCart: () {
                                   print('Article ajouté au panier');
                                 },
