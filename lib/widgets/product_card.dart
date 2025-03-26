@@ -20,8 +20,10 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image
-          Expanded(
+          // Product Image with fixed dimensions
+          SizedBox(
+            height: 150, // Fixed height for all images
+            width: double.infinity,
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12.0),
@@ -29,8 +31,21 @@ class ProductCard extends StatelessWidget {
               ),
               child: Image.network(
                 imageUrl,
-                width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Display a square placeholder when image fails to load
+                  return Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

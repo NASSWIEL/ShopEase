@@ -5,6 +5,7 @@ class DetailsArticle extends StatelessWidget {
   final String articleName;
   final double price;
   final String description;
+  final String imageUrl;
   final VoidCallback onAddToCart;
 
   const DetailsArticle({
@@ -13,6 +14,7 @@ class DetailsArticle extends StatelessWidget {
     required this.articleName,
     required this.price,
     required this.description,
+    required this.imageUrl,
     required this.onAddToCart,
   }) : super(key: key);
 
@@ -27,7 +29,32 @@ class DetailsArticle extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
+          // Image
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.network(
+                imageUrl,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Icon(Icons.error, color: Colors.red),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Catégorie
           Text(
             category,
@@ -75,10 +102,7 @@ class DetailsArticle extends StatelessWidget {
           // Description du produit
           Text(
             description,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
           const SizedBox(height: 16),
 
@@ -89,7 +113,9 @@ class DetailsArticle extends StatelessWidget {
               icon: const Icon(Icons.add_shopping_cart),
               label: const Text(
                 'Ajouter au panier',
-                style: TextStyle(color: Colors.white), // Couleur du texte en blanc
+                style: TextStyle(
+                  color: Colors.white,
+                ), // Couleur du texte en blanc
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF5D9C88),

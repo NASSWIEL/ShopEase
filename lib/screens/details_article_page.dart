@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:untitled/widgets/details_article.dart';
+
 class DetailsArticlePage extends StatelessWidget {
   final String imageUrl;
   final Widget detailsWidget;
@@ -48,15 +49,6 @@ class DetailsArticlePage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                height: 250,
-                width: double.infinity,
-              ),
-            ),
             const SizedBox(height: 20),
             detailsWidget, // Affichage du widget de détails
             const SizedBox(height: 20),
