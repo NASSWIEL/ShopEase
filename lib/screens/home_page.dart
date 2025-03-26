@@ -273,6 +273,7 @@ class _HomePageState extends State<HomePage> {
                             return DetailsArticlePage(
                               imageUrl: imageUrl,
                               detailsWidget: DetailsArticle(
+                                id: index.toString(),
                                 category: category,
                                 articleName: articleName,
                                 price: price,
@@ -288,6 +289,7 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                     child: ProductCard(
+                      id: index.toString(),
                       name: product["name"] ?? 'Unknown',
                       price: product["price"] ?? 'N/A',
                       imageUrl: product["imageUrl"] ?? '',
