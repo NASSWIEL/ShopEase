@@ -38,6 +38,34 @@ class _HomePageState extends State<HomePage> {
       'description': 'Short description for product 2.',
       'category': 'Shirt',
     },
+    {
+      'name': 'Product 3',
+      'price': '\$30.00',
+      'imageUrl': 'https://picsum.photos/400?2',
+      'description': 'Short description for product 2.',
+      'category': 'Shirt',
+    },
+    {
+      'name': 'Product 4',
+      'price': '\$30.00',
+      'imageUrl': 'https://picsum.photos/400?2',
+      'description': 'Short description for product 2.',
+      'category': 'Shirt',
+    },
+    {
+      'name': 'Product 5',
+      'price': '\$30.00',
+      'imageUrl': 'https://picsum.photos/400?2',
+      'description': 'Short description for product 2.',
+      'category': 'Shirt',
+    },
+    {
+      'name': 'Product 6',
+      'price': '\$30.00',
+      'imageUrl': 'https://picsum.photos/400?2',
+      'description': 'Short description for product 2.',
+      'category': 'Shirt',
+    },
     // ... Ajoute d’autres produits
   ];
 

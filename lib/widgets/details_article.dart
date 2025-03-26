@@ -29,6 +29,7 @@ class DetailsArticle extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
           // Image
           Center(
