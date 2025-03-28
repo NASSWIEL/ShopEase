@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/cart.dart';
-import '../widgets/panier_vide_widget.dart'; // Import the PanierVideWidget
+import '../widgets/panier_vide_widget.dart';
+import '../widgets/article_ajoute_panier.dart'; // Import ArticleAjoutePanier
 
 class PanierPage extends StatelessWidget {
   const PanierPage({Key? key}) : super(key: key);
@@ -15,9 +16,8 @@ class PanierPage extends StatelessWidget {
         title: const Text('Mon Panier'),
         backgroundColor: const Color(0xFF5D9C88),
       ),
-      body:
-      cart.items.isEmpty
-          ? const PanierVideWidget() // Use PanierVideWidget when cart is empty
+      body: cart.items.isEmpty
+          ? const PanierVideWidget()
           : Column(
         children: [
           Expanded(
@@ -27,73 +27,9 @@ class PanierPage extends StatelessWidget {
                 final cartItem = cart.items.values.toList()[i];
                 final productId = cart.items.keys.toList()[i];
 
-                return Dismissible(
-                  key: ValueKey(cartItem.id),
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 4,
-                    ),
-                    child: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (direction) {
-                    cart.removeItem(productId);
-                  },
-                  confirmDismiss: (direction) {
-                    return showDialog(
-                      context: context,
-                      builder:
-                          (ctx) => AlertDialog(
-                        title: const Text('Êtes-vous sûr?'),
-                        content: const Text(
-                          'Voulez-vous retirer cet article du panier?',
-                        ),
-                        actions: [
-                          TextButton(
-                            child: const Text('Non'),
-                            onPressed: () {
-                              Navigator.of(ctx).pop(false);
-                            },
-                          ),
-                          TextButton(
-                            child: const Text('Oui'),
-                            onPressed: () {
-                              Navigator.of(ctx).pop(true);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 15,
-                      vertical: 4,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(
-                            cartItem.imageUrl,
-                          ),
-                        ),
-                        title: Text(cartItem.title),
-                        subtitle: Text(
-                          'Total: \$${(cartItem.price * cartItem.quantity).toStringAsFixed(2)}',
-                        ),
-                        trailing: Text('${cartItem.quantity} x'),
-                      ),
-                    ),
-                  ),
+                return ArticleAjoutePanier( // Use ArticleAjoutePanier here
+                  cartItem: cartItem,
+                  productId: productId,
                 );
               },
             ),
