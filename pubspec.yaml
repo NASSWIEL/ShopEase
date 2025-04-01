@@ -33,6 +33,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.9 # Add this line
   provider: ^6.1.2
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  flutter_map_cancellable_tile_provider: ^3.1.0
 
 dev_dependencies:
   flutter_test:
