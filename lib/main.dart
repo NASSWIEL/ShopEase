@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/screens/connexion_page.dart';
+import 'package:untitled/screens/gestion_article_vendeur_page.dart';
 import 'package:untitled/screens/inscription_page.dart';
 import 'package:untitled/screens/home_page.dart';
 import 'package:untitled/screens/livraison_adresse_page.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
       theme: ThemeData(primarySwatch: Colors.green),
+      home: GestionArticleVendeurPage(), // Change this line
       home: PaymentPage(), // Change this line
     );
   }
