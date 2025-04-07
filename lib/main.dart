@@ -30,8 +30,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: GestionArticleVendeurPage(), // Change this line
-      home: PaymentPage(), // Change this line
+      home: SplashScreen(), // Changed from GestionArticleVendeurPage to SplashScreen
     );
   }
 }
