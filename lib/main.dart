@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:untitled/screens/connexion_page.dart';
 import 'package:untitled/screens/inscription_page.dart';
 import 'package:untitled/screens/home_page.dart';
+import 'package:untitled/screens/livraison_adresse_page.dart';
+import 'package:untitled/screens/payment_page.dart';
 import 'package:untitled/screens/splash_screen.dart'; // Add this import
 import 'package:provider/provider.dart';
 import 'models/cart.dart';
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: HomePage(), // Change this line
+      home: PaymentPage(), // Change this line
     );
   }
 }
