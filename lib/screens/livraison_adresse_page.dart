@@ -6,9 +6,15 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:untitled/screens/payment_page.dart';
 
 class LivraisonAdressePage extends StatefulWidget {
-  const LivraisonAdressePage({super.key});
+  final double cartTotal;
+
+  const LivraisonAdressePage({
+    super.key,
+    this.cartTotal = 0.0, // Default value if not provided
+  });
 
   @override
   State<LivraisonAdressePage> createState() => _LivraisonAdressePageState();
@@ -77,11 +83,11 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
 
   Future<void> _getAddressFromLatLng() async {
     try {
-      List<geocoding.Placemark> placemarks = await geocoding
-          .placemarkFromCoordinates(
-            _currentLocation.latitude,
-            _currentLocation.longitude,
-          );
+      List<geocoding.Placemark> placemarks =
+          await geocoding.placemarkFromCoordinates(
+        _currentLocation.latitude,
+        _currentLocation.longitude,
+      );
 
       if (placemarks.isNotEmpty) {
         geocoding.Placemark place = placemarks[0];
@@ -154,7 +160,10 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Delivery Address')),
+      appBar: AppBar(
+        title: const Text('Adresse de livraison'),
+        centerTitle: true,
+      ),
       body: Column(
         children: [
           Padding(
@@ -168,7 +177,7 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
                   controller: controller,
                   focusNode: focusNode,
                   decoration: const InputDecoration(
-                    labelText: 'Enter your address',
+                    labelText: 'Saisissez votre adresse',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.search),
                   ),
@@ -228,20 +237,61 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
               ],
             ),
           ),
+
+          // Show the cart total
+          if (widget.cartTotal > 0)
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  const Text(
+                    'Montant du panier:',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${widget.cartTotal.toStringAsFixed(2)} €',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
-                // Save the selected address and return to previous screen
-                Navigator.pop(context, {
-                  'address': _currentAddress,
-                  'location': _currentLocation,
-                });
+                if (_currentAddress.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Veuillez sélectionner une adresse')),
+                  );
+                  return;
+                }
+
+                // Navigate to payment page with address and cart total
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentPage(
+                      deliveryAddress: _currentAddress,
+                      cartTotal: widget.cartTotal,
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
+                backgroundColor: const Color(0xFF5D9C88),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text('Confirm Address'),
+              child: const Text('Continuer vers le paiement',
+                  style: TextStyle(fontSize: 16)),
             ),
           ),
         ],

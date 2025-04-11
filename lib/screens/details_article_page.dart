@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import 'package:untitled/widgets/details_article.dart';
-
-class DetailsArticlePage extends StatelessWidget {
+class DetailsArticlePage extends StatefulWidget {
   final String imageUrl;
   final Widget detailsWidget;
 
@@ -14,22 +12,19 @@ class DetailsArticlePage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _DetailsArticlePageState createState() => _DetailsArticlePageState();
+}
+
+class _DetailsArticlePageState extends State<DetailsArticlePage> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF5D9C88),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF5D9C88)),
+          onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: SvgPicture.asset(
@@ -37,23 +32,50 @@ class DetailsArticlePage extends StatelessWidget {
           height: 55,
           colorFilter: null,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Color(0xFF5D9C88)),
-            onPressed: () {
-              print('Panier cliqué depuis la page de détails');
-            },
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image de l'article
+          // SizedBox(
+          //   width: double.infinity,
+          //   height: MediaQuery.of(context).size.height * 0.4,
+          //   child: Image.network(
+          //     widget.imageUrl,
+          //     fit: BoxFit.cover,
+          //     loadingBuilder: (context, child, loadingProgress) {
+          //       if (loadingProgress == null) return child;
+          //       return Center(
+          //         child: CircularProgressIndicator(
+          //           value: loadingProgress.expectedTotalBytes != null
+          //               ? loadingProgress.cumulativeBytesLoaded /
+          //                   (loadingProgress.expectedTotalBytes ?? 1)
+          //               : null,
+          //           color: const Color(0xFF5D9C88),
+          //         ),
+          //       );
+          //     },
+          //     errorBuilder: (context, error, stackTrace) {
+          //       return const Center(
+          //         child: Column(
+          //           mainAxisAlignment: MainAxisAlignment.center,
+          //           children: [
+          //             Icon(Icons.error_outline, color: Colors.red, size: 40),
+          //             SizedBox(height: 8),
+          //             Text('Erreur de chargement d\'image',
+          //                 style: TextStyle(color: Colors.red))
+          //           ],
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
+
+          // Détails de l'article
+          Expanded(
+            child: widget.detailsWidget,
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            detailsWidget, // Affichage du widget de détails
-            const SizedBox(height: 20),
-          ],
-        ),
       ),
     );
   }

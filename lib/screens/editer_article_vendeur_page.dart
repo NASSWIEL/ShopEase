@@ -1,22 +1,20 @@
-// lib/screens/editer_article_vendeur_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'dart:io';
-
-// Import the ProduitVendeur model (adjust path if needed)
-import 'gestion_article_vendeur_page.dart' show ProduitVendeur;
+import '../models/produit_vendeur.dart'; // Import the model
 
 class EditerArticleVendeurPage extends StatefulWidget {
-  final ProduitVendeur produit; // Product to edit passed in constructor
+  final ProduitVendeur produit;
 
-  const EditerArticleVendeurPage({Key? key, required this.produit}) : super(key: key);
+  const EditerArticleVendeurPage({super.key, required this.produit});
 
   @override
-  _EditerArticleVendeurPageState createState() => _EditerArticleVendeurPageState();
+  _EditerArticleVendeurPageState createState() =>
+      _EditerArticleVendeurPageState();
 }
 
 class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
@@ -31,17 +29,22 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
 
   XFile? _newlyPickedImage; // Holds the NEW image picked by the user
   String? _currentImagePath; // Holds the path of the EXISTING image
-  bool _imageDeleted = false; // Flag to track if current image was marked for deletion
+  bool _imageDeleted =
+      false; // Flag to track if current image was marked for deletion
 
   @override
   void initState() {
     super.initState();
     // Initialize controllers with the existing product data
-    _barcodeController = TextEditingController(text: widget.produit.barcode ?? '');
+    _barcodeController =
+        TextEditingController(text: widget.produit.barcode ?? '');
     _nameController = TextEditingController(text: widget.produit.nom);
-    _quantityController = TextEditingController(text: widget.produit.quantite.toString());
-    _priceController = TextEditingController(text: widget.produit.prix.toStringAsFixed(2)); // Format price
-    _descriptionController = TextEditingController(text: widget.produit.description ?? '');
+    _quantityController =
+        TextEditingController(text: widget.produit.quantite.toString());
+    _priceController = TextEditingController(
+        text: widget.produit.prix.toStringAsFixed(2)); // Format price
+    _descriptionController =
+        TextEditingController(text: widget.produit.description ?? '');
     _currentImagePath = widget.produit.imageUrl; // Store existing image path
   }
 
@@ -60,11 +63,13 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     try {
-      final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile =
+          await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() {
           _newlyPickedImage = pickedFile; // Store the newly picked file
-          _imageDeleted = false; // If user picks new, don't consider old one deleted for UI
+          _imageDeleted =
+              false; // If user picks new, don't consider old one deleted for UI
         });
         print('New image picked: ${pickedFile.path}');
       } else {
@@ -101,31 +106,37 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
     bool deletingOld = false; // Track if we need to delete the old file
 
     // 1. Handle image change: Copy new image OR handle deletion
-    if (_newlyPickedImage != null) { // User picked a NEW image
+    if (_newlyPickedImage != null) {
+      // User picked a NEW image
       try {
-        final Directory appDocumentsDir = await getApplicationDocumentsDirectory();
+        final Directory appDocumentsDir =
+            await getApplicationDocumentsDirectory();
         final String originalFileName = p.basename(_newlyPickedImage!.path);
-        final String uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_$originalFileName';
-        final String destinationPath = p.join(appDocumentsDir.path, uniqueFileName);
+        final String uniqueFileName =
+            '${DateTime.now().millisecondsSinceEpoch}_$originalFileName';
+        final String destinationPath =
+            p.join(appDocumentsDir.path, uniqueFileName);
 
         final File destinationFile = File(destinationPath);
-        await destinationFile.writeAsBytes(await _newlyPickedImage!.readAsBytes());
+        await destinationFile
+            .writeAsBytes(await _newlyPickedImage!.readAsBytes());
 
         // Mark old image for deletion IF it exists
-        deletingOld = _currentImagePath != null && _currentImagePath!.isNotEmpty;
+        deletingOld =
+            _currentImagePath != null && _currentImagePath!.isNotEmpty;
         finalImagePath = destinationPath; // Update to the new image path
         print('New image copied to: $finalImagePath');
-
       } catch (e) {
         print('Error saving new image: $e');
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Erreur sauvegarde nouvelle image: $e')),
           );
         }
         return; // Stop saving if image copy failed
       }
-    } else if (_imageDeleted) { // User explicitly deleted the image without picking new
+    } else if (_imageDeleted) {
+      // User explicitly deleted the image without picking new
       deletingOld = true;
       finalImagePath = null; // Set path to null as image is removed
       print('Image marked for deletion, final path set to null.');
@@ -136,12 +147,13 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
       await _deleteFile(_currentImagePath);
     }
 
-
     // 3. Gather updated data from controllers
     final updatedBarcode = _barcodeController.text;
     final updatedName = _nameController.text;
-    final updatedQuantity = int.tryParse(_quantityController.text) ?? widget.produit.quantite; // Fallback
-    final updatedPrice = double.tryParse(_priceController.text) ?? widget.produit.prix; // Fallback
+    final updatedQuantity = int.tryParse(_quantityController.text) ??
+        widget.produit.quantite; // Fallback
+    final updatedPrice = double.tryParse(_priceController.text) ??
+        widget.produit.prix; // Fallback
     final updatedDescription = _descriptionController.text;
 
     // 4. Create the updated ProduitVendeur object using copyWith
@@ -149,8 +161,11 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
       nom: updatedName,
       quantite: updatedQuantity,
       prix: updatedPrice,
-      barcode: updatedBarcode.isEmpty ? null : updatedBarcode, // Handle empty string
-      description: updatedDescription.isEmpty ? null : updatedDescription, // Handle empty string
+      barcode:
+          updatedBarcode.isEmpty ? null : updatedBarcode, // Handle empty string
+      description: updatedDescription.isEmpty
+          ? null
+          : updatedDescription, // Handle empty string
       // Use ValueGetter to explicitly pass null if image was deleted
       imageUrlFn: () => finalImagePath,
     );
@@ -173,7 +188,8 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
 
     // Determine which image to display
     ImageProvider? displayImageProvider;
-    String? imagePathToShow = _newlyPickedImage?.path ?? (!_imageDeleted ? _currentImagePath : null);
+    String? imagePathToShow =
+        _newlyPickedImage?.path ?? (!_imageDeleted ? _currentImagePath : null);
 
     if (imagePathToShow != null && imagePathToShow.isNotEmpty) {
       try {
@@ -181,23 +197,26 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
         if (File(imagePathToShow).existsSync()) {
           displayImageProvider = FileImage(File(imagePathToShow));
         } else {
-          print("Warning: Image path exists but file not found: $imagePathToShow");
+          print(
+              "Warning: Image path exists but file not found: $imagePathToShow");
           // Reset image state if file doesn't exist
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               setState(() {
-                if (_newlyPickedImage?.path == imagePathToShow) _newlyPickedImage = null;
-                if (_currentImagePath == imagePathToShow) _currentImagePath = null;
+                if (_newlyPickedImage?.path == imagePathToShow)
+                  _newlyPickedImage = null;
+                if (_currentImagePath == imagePathToShow)
+                  _currentImagePath = null;
                 _imageDeleted = false; // Ensure flag is reset
               });
             }
           });
         }
-      } catch (e) { // Catch potential errors from File operations
+      } catch (e) {
+        // Catch potential errors from File operations
         print("Error creating FileImage: $e");
       }
     }
-
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -206,7 +225,8 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF5D9C88)),
-          onPressed: () => Navigator.of(context).pop(), // Pop without returning data (Cancel)
+          onPressed: () => Navigator.of(context)
+              .pop(), // Pop without returning data (Cancel)
         ),
         centerTitle: true,
         title: SvgPicture.asset(
@@ -225,7 +245,11 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
                   color: darkContainerColor,
                   borderRadius: BorderRadius.circular(20.0),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.2), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 3)),
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3)),
                   ],
                 ),
                 child: Form(
@@ -237,7 +261,11 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
                       const Center(
                         child: Text(
                           'DÉTAILLE ARTICLE', // Title for editing
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1),
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.1),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -245,57 +273,108 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
 
                       // --- Input Fields (Initialized with data) ---
                       // Code-barre
-                      const Text('Code-barre:', style: TextStyle(color: labelColor)),
+                      const Text('Code-barre:',
+                          style: TextStyle(color: labelColor)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _barcodeController,
                         style: const TextStyle(color: Colors.black87),
-                        decoration: InputDecoration(filled: true, fillColor: inputFillColor, border: OutlineInputBorder( borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide.none, ), contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: inputFillColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10)),
                       ),
                       const SizedBox(height: 15),
 
                       // Nom d'article
-                      const Text('Nom d\'article:', style: TextStyle(color: labelColor)),
+                      const Text('Nom d\'article:',
+                          style: TextStyle(color: labelColor)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _nameController,
                         style: const TextStyle(color: Colors.black87),
-                        decoration: InputDecoration(filled: true, fillColor: inputFillColor, border: OutlineInputBorder( borderRadius: BorderRadius.circular(10.0),  borderSide: BorderSide.none, ),  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: inputFillColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10)),
                       ),
                       const SizedBox(height: 15),
 
                       // Quantité
-                      const Text('Quantité:', style: TextStyle(color: labelColor)),
+                      const Text('Quantité:',
+                          style: TextStyle(color: labelColor)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _quantityController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
                         style: const TextStyle(color: Colors.black87),
-                        decoration: InputDecoration(filled: true, fillColor: inputFillColor, border: OutlineInputBorder( borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide.none, ), contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: inputFillColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10)),
                       ),
                       const SizedBox(height: 15),
 
                       // Prix unitaire
-                      const Text('Prix unitaire:', style: TextStyle(color: labelColor)),
+                      const Text('Prix unitaire:',
+                          style: TextStyle(color: labelColor)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _priceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}'))
+                        ],
                         style: const TextStyle(color: Colors.black87),
-                        decoration: InputDecoration(filled: true, fillColor: inputFillColor, border: OutlineInputBorder( borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide.none, ), contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: inputFillColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10)),
                       ),
                       const SizedBox(height: 15),
 
                       // Description
-                      const Text('Description:', style: TextStyle(color: labelColor)),
+                      const Text('Description:',
+                          style: TextStyle(color: labelColor)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _descriptionController,
                         maxLines: 4,
                         style: const TextStyle(color: Colors.black87),
-                        decoration: InputDecoration(filled: true, fillColor: inputFillColor, border: OutlineInputBorder( borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide.none, ), contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)),
+                        decoration: InputDecoration(
+                            filled: true,
+                            fillColor: inputFillColor,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10)),
                       ),
                       const SizedBox(height: 25),
 
@@ -312,30 +391,52 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
                                 color: Colors.grey[300], // Placeholder color
                                 borderRadius: BorderRadius.circular(10),
                                 image: displayImageProvider != null
-                                    ? DecorationImage(image: displayImageProvider, fit: BoxFit.cover, onError: (exception, stackTrace) { print("Error loading image preview: $exception"); })
+                                    ? DecorationImage(
+                                        image: displayImageProvider,
+                                        fit: BoxFit.cover,
+                                        onError: (exception, stackTrace) {
+                                          print(
+                                              "Error loading image preview: $exception");
+                                        })
                                     : null,
                               ),
                               child: displayImageProvider == null
-                                  ? Icon(Icons.image_not_supported, color: Colors.grey[600], size: 40)
+                                  ? Icon(Icons.image_not_supported,
+                                      color: Colors.grey[600], size: 40)
                                   : null,
                             ),
 
                             // Change Image Button
                             ElevatedButton.icon(
                               onPressed: _pickImage,
-                              icon: const Icon(Icons.upload_file, color: darkContainerColor),
-                              label: const Text('Changer l\'image de l\'article', style: TextStyle(color: darkContainerColor)),
-                              style: ElevatedButton.styleFrom(backgroundColor: inputFillColor, foregroundColor: darkContainerColor, shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(30.0), ), padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12)),
+                              icon: const Icon(Icons.upload_file,
+                                  color: darkContainerColor),
+                              label: const Text(
+                                  'Changer l\'image de l\'article',
+                                  style: TextStyle(color: darkContainerColor)),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: inputFillColor,
+                                  foregroundColor: darkContainerColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30.0),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 25, vertical: 12)),
                             ),
                             // Optional: Add a button to explicitly remove the image
-                            if (imagePathToShow != null) // Show delete only if there is an image
+                            if (imagePathToShow !=
+                                null) // Show delete only if there is an image
                               TextButton.icon(
-                                icon: Icon(Icons.delete_outline, color: Colors.red[400]),
-                                label: Text('Supprimer l\'image', style: TextStyle(color: Colors.red[400])),
+                                icon: Icon(Icons.delete_outline,
+                                    color: Colors.red[400]),
+                                label: Text('Supprimer l\'image',
+                                    style: TextStyle(color: Colors.red[400])),
                                 onPressed: () {
                                   setState(() {
-                                    _newlyPickedImage = null; // Clear any newly picked image
-                                    _imageDeleted = true; // Mark current image for deletion on save
+                                    _newlyPickedImage =
+                                        null; // Clear any newly picked image
+                                    _imageDeleted =
+                                        true; // Mark current image for deletion on save
                                   });
                                   print("Image marked for deletion.");
                                 },
@@ -355,8 +456,16 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
               ElevatedButton.icon(
                 onPressed: _saveChanges, // Call the save changes function
                 icon: const Icon(Icons.save, color: Colors.white),
-                label: const Text('Sauvegarder', style: TextStyle(color: Colors.white, fontSize: 16)),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3a3a3a), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(15.0), ), padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15), elevation: 5),
+                label: const Text('Sauvegarder',
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3a3a3a),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 15),
+                    elevation: 5),
               ),
               const SizedBox(height: 20),
             ],

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:untitled/widgets/product_card.dart';
 import 'package:untitled/screens/panier_page.dart';
-import 'package:untitled/screens/details_article_page.dart'; // Import de la page de détails
+import 'package:untitled/screens/details_article_page.dart';
 import 'package:untitled/widgets/details_article.dart';
+import 'package:untitled/screens/connexion_page.dart'; // Import for logout redirection
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -76,8 +78,8 @@ class _HomePageState extends State<HomePage> {
     return allProducts
         .where(
           (product) => product['name']!.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ),
+                _searchQuery.toLowerCase(),
+              ),
         )
         .toList();
   }
@@ -174,15 +176,38 @@ class _HomePageState extends State<HomePage> {
       ),
       drawer: Drawer(
         child: ListView(
-          children: const [
-            DrawerHeader(
+          children: [
+            const DrawerHeader(
               decoration: BoxDecoration(color: Color(0xFF5D9C88)),
               child: Text(
-                'ShopEase Menu',
+                'Menu ShopEase',
                 style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
-            // Ajoute ici des éléments de menu si nécessaire
+            // Logout option
+            ListTile(
+              leading: const Icon(Icons.logout, color: Color(0xFF5D9C88)),
+              title: const Text('Déconnexion'),
+              onTap: () async {
+                // Clear user session
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('currentUser');
+                await prefs.remove('currentUserType');
+
+                if (context.mounted) {
+                  // Close drawer
+                  Navigator.pop(context);
+                  // Navigate to login page and remove all previous routes
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ConnexionPage()),
+                    (route) => false, // Remove all previous routes
+                  );
+                }
+              },
+            ),
+            // Additional drawer items can be added here
           ],
         ),
       ),
@@ -208,7 +233,7 @@ class _HomePageState extends State<HomePage> {
                       child: TextField(
                         controller: _searchController,
                         decoration: const InputDecoration(
-                          hintText: 'Search products...',
+                          hintText: 'Rechercher des produits...',
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 15),
                         ),
@@ -250,15 +275,13 @@ class _HomePageState extends State<HomePage> {
                         MaterialPageRoute(
                           builder: (context) {
                             // Extraction des informations du produit
-                            final imageUrl =
-                                product['imageUrl'] ??
+                            final imageUrl = product['imageUrl'] ??
                                 'https://via.placeholder.com/400';
                             final category =
                                 product['category'] ?? 'Unknown Category';
                             final articleName =
                                 product['name'] ?? 'Unknown Product';
-                            final price =
-                                double.tryParse(
+                            final price = double.tryParse(
                                   product['price']?.replaceAll(
                                         RegExp(r'[^0-9.]'),
                                         '',
@@ -266,8 +289,7 @@ class _HomePageState extends State<HomePage> {
                                       '0',
                                 ) ??
                                 0.0;
-                            final description =
-                                product['description'] ??
+                            final description = product['description'] ??
                                 'No description provided.';
 
                             return DetailsArticlePage(

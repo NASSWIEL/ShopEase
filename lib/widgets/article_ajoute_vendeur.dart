@@ -1,20 +1,27 @@
 // lib/widgets/article_ajoute_vendeur.dart
 import 'package:flutter/material.dart';
+import '../models/produit_vendeur.dart';
 
 class ArticleAjouteVendeur extends StatelessWidget {
   final String nom;
   final int quantite;
   final double prix;
-  // Optionnel: vous pouvez ajouter un imageUrl si vous voulez afficher une vraie image plus tard
-  // final String? imageUrl;
 
   const ArticleAjouteVendeur({
     Key? key,
     required this.nom,
     required this.quantite,
     required this.prix,
-    // this.imageUrl,
   }) : super(key: key);
+
+  // Constructor that creates from ProduitVendeur model
+  factory ArticleAjouteVendeur.fromModel(ProduitVendeur model) {
+    return ArticleAjouteVendeur(
+      nom: model.nom,
+      quantite: model.quantite,
+      prix: model.prix,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,8 @@ class ArticleAjouteVendeur extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8), // Couleur un peu plus claire ou différente
+              color: Colors.white
+                  .withOpacity(0.8), // Couleur un peu plus claire ou différente
               borderRadius: BorderRadius.circular(8.0),
             ),
             // Plus tard, vous pourrez remplacer ceci par:

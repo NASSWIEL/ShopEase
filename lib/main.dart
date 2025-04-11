@@ -5,11 +5,17 @@ import 'package:untitled/screens/inscription_page.dart';
 import 'package:untitled/screens/home_page.dart';
 import 'package:untitled/screens/livraison_adresse_page.dart';
 import 'package:untitled/screens/payment_page.dart';
-import 'package:untitled/screens/splash_screen.dart'; // Add this import
+import 'package:untitled/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'models/cart.dart';
+import 'utils/plugin_init.dart'; // Import the plugin initializer
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
+
+  // Initialize plugins that need early initialization
+  await PluginInitializer.initializePlugins();
+
   runApp(
     MultiProvider(
       providers: [
@@ -30,7 +36,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: SplashScreen(), // Changed from GestionArticleVendeurPage to SplashScreen
+      home:
+          const SplashScreen(), // Changed to SplashScreen as the initial route
     );
   }
 }
