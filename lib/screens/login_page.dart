@@ -2,28 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:untitled/screens/gestion_article_vendeur_page.dart';
 import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/services/api_service.dart'; // Import ApiService
+import 'package:untitled/screens/inscription_page.dart';
+import 'package:untitled/services/api_service.dart';
 
-class InscriptionPage extends StatefulWidget {
-  const InscriptionPage({Key? key}) : super(key: key);
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
-  _InscriptionPageState createState() => _InscriptionPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _InscriptionPageState extends State<InscriptionPage> {
-  final TextEditingController _usernameController = TextEditingController();
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final ApiService _apiService = ApiService(); // Instantiate ApiService
+  final ApiService _apiService = ApiService();
 
-  String _userType = 'particulier'; // Default user type
   bool _isLoading = false;
 
-  Future<void> _register() async {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -32,31 +29,17 @@ class _InscriptionPageState extends State<InscriptionPage> {
       _isLoading = true;
     });
 
-    // Get user input
-    final username =
-        _usernameController.text.trim(); // Keep username for display/name field
-    final password = _passwordController.text;
     final email = _emailController.text.trim();
-
-    // Map UI user type (in French) to backend API user type (in English)
-    final backendUserType = _userType == 'particulier' ? 'customer' : 'vendor';
+    final password = _passwordController.text;
 
     try {
-      // Call the API service to register the user
-      final response = await _apiService.registerUser(
-        username, // Use username as the 'name' field for the backend
-        email,
-        password,
-        backendUserType, // Send the mapped user type
-      );
+      final response = await _apiService.loginUser(email, password);
 
-      // Registration successful, token is saved by ApiService
-      // Navigate based on the user type returned from the backend
-      final registeredUserType = response['user']?['user_type'] ??
-          'customer'; // Default to customer if missing
+      // Determine which screen to navigate to based on user type
+      final userType = response['user']?['user_type'] ?? 'customer';
 
       if (mounted) {
-        if (registeredUserType == 'vendor') {
+        if (userType == 'vendor') {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -70,9 +53,8 @@ class _InscriptionPageState extends State<InscriptionPage> {
         }
       }
     } catch (e) {
-      // Use the error message from the API exception
       _showErrorDialog(
-          'Erreur d\'inscription: ${e.toString().replaceFirst("Exception: ", "")}');
+          'Erreur de connexion: ${e.toString().replaceFirst("Exception: ", "")}');
     } finally {
       if (mounted) {
         setState(() {
@@ -84,14 +66,10 @@ class _InscriptionPageState extends State<InscriptionPage> {
 
   void _showErrorDialog(String message) {
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Erreur d\'inscription'),
+          title: const Text('Erreur de connexion'),
           content: Text(message),
           actions: [
             TextButton(
@@ -115,7 +93,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
         child: SingleChildScrollView(
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
-            constraints: const BoxConstraints(maxWidth: 400, minHeight: 600),
+            constraints: const BoxConstraints(maxWidth: 400, minHeight: 550),
             padding: EdgeInsets.all(isSmallScreen ? 15.0 : 20.0),
             decoration: BoxDecoration(
               color: Colors.grey[900],
@@ -142,12 +120,12 @@ class _InscriptionPageState extends State<InscriptionPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'Inscription',
+                      'Connexion',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 20 : 24,
                         color: Colors.white,
@@ -155,30 +133,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Username Field
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: "Nom d'utilisateur",
-                      labelStyle: TextStyle(color: Colors.white),
-                      filled: true,
-                      fillColor: Colors.white12,
-                      border: OutlineInputBorder(),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un nom d\'utilisateur';
-                      }
-                      if (value.length < 4) {
-                        return 'Le nom d\'utilisateur doit contenir au moins 4 caractères';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   // Email Field
                   TextFormField(
@@ -193,11 +148,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                     style: const TextStyle(color: Colors.white),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un email';
-                      }
-                      // Basic email validation
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Veuillez entrer un email valide';
+                        return 'Veuillez entrer votre email';
                       }
                       return null;
                     },
@@ -218,90 +169,23 @@ class _InscriptionPageState extends State<InscriptionPage> {
                     style: const TextStyle(color: Colors.white),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un mot de passe';
-                      }
-                      if (value.length < 6) {
-                        return 'Le mot de passe doit contenir au moins 6 caractères';
+                        return 'Veuillez entrer votre mot de passe';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
-                  // Confirm Password Field
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirmer le mot de passe',
-                      labelStyle: TextStyle(color: Colors.white),
-                      filled: true,
-                      fillColor: Colors.white12,
-                      border: OutlineInputBorder(),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez confirmer votre mot de passe';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Les mots de passe ne correspondent pas';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // User Type Selection
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text(
-                            'Particulier', // Keep UI text
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                          value: 'particulier', // Keep UI value
-                          groupValue: _userType,
-                          onChanged: (value) {
-                            setState(() {
-                              _userType = value!;
-                            });
-                          },
-                          activeColor: const Color(0xFF5D9C88),
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text(
-                            'Vendeur', // Keep UI text
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                          value: 'vendeur', // Keep UI value
-                          groupValue: _userType,
-                          onChanged: (value) {
-                            setState(() {
-                              _userType = value!;
-                            });
-                          },
-                          activeColor: const Color(0xFF5D9C88),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Register Button
+                  // Login Button
                   _isLoading
                       ? const CircularProgressIndicator(
                           color: Color(0xFF5D9C88))
                       : ElevatedButton(
-                          onPressed: _register,
+                          onPressed: _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2C6149),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 30,
+                              horizontal: 40,
                               vertical: 12,
                             ),
                             textStyle: const TextStyle(
@@ -310,19 +194,19 @@ class _InscriptionPageState extends State<InscriptionPage> {
                             ),
                           ),
                           child: const Text(
-                            "S'inscrire",
+                            "Se connecter",
                             style: TextStyle(
                                 color: Colors.white, letterSpacing: 1),
                           ),
                         ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
-                  // Login Link
+                  // Register Link
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Vous avez déjà un compte?",
+                        "Vous n'avez pas de compte?",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: isSmallScreen ? 12 : 14,
@@ -331,7 +215,14 @@ class _InscriptionPageState extends State<InscriptionPage> {
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const InscriptionPage(),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           side: const BorderSide(
@@ -340,7 +231,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                           ),
                         ),
                         child: Text(
-                          'Se connecter',
+                          "S'inscrire",
                           style: TextStyle(
                             color: const Color(0xFF5D9C88),
                             fontWeight: FontWeight.bold,

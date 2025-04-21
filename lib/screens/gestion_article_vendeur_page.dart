@@ -6,8 +6,9 @@ import '../widgets/article_ajoute_vendeur.dart';
 import 'ajouter_article_vendeur_page.dart';
 import 'editer_article_vendeur_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'connexion_page.dart';
 import '../models/produit_vendeur.dart';
+import '../services/api_service.dart'; // Import API service
+import 'package:untitled/widgets/profile_logout_widget.dart'; // Import the profile widget
 
 class GestionArticleVendeurPage extends StatefulWidget {
   const GestionArticleVendeurPage({Key? key}) : super(key: key);
@@ -17,45 +18,24 @@ class GestionArticleVendeurPage extends StatefulWidget {
 }
 
 class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
-  // Sample data using the imported model
-  final List<ProduitVendeur> _produitsSource = [
-    ProduitVendeur(
-        id: 'p1',
-        nom: 'Fauxica Sport 1',
-        quantite: 45,
-        prix: 49.0,
-        barcode: '123456789',
-        description: 'Une description pour Fauxica 1',
-        imageUrl: null),
-    ProduitVendeur(
-        id: 'p2',
-        nom: 'Fauxica Sport 2',
-        quantite: 30,
-        prix: 55.0,
-        description: 'Autre description'),
-    ProduitVendeur(id: 'p3', nom: 'Fauxica Sport 3', quantite: 10, prix: 42.0),
-    ProduitVendeur(
-        id: 'p4',
-        nom: 'Montre Casio',
-        quantite: 3,
-        prix: 79.0,
-        barcode: '987654321'),
-    ProduitVendeur(
-        id: 'p5',
-        nom: 'Pantoufles',
-        quantite: 1,
-        prix: 12.0,
-        description: 'Très confortables'),
-  ];
-
+  // List to hold products from the database
+  List<ProduitVendeur> _produitsSource = [];
   List<ProduitVendeur> _produitsFiltres = [];
   final TextEditingController _searchController = TextEditingController();
+
+  // API service instance
+  final ApiService _apiService = ApiService();
+
+  // Loading and error states
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _produitsFiltres = List.from(_produitsSource);
     _searchController.addListener(_filterProduits);
+    // Fetch products from the API when the page loads
+    _fetchProducts();
   }
 
   @override
@@ -63,6 +43,38 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
     _searchController.removeListener(_filterProduits);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Method to fetch products from the API
+  Future<void> _fetchProducts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call the API service to get products
+      final products = await _apiService.getVendorProducts();
+
+      if (mounted) {
+        setState(() {
+          _produitsSource = products;
+          _produitsFiltres = List.from(products);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Erreur: $e';
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Erreur lors de la récupération des produits: $e')),
+        );
+      }
+    }
   }
 
   void _filterProduits() {
@@ -165,10 +177,10 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
         setState(() {
           _produitsSource.insert(0, newProduct);
           _filterProduits();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Article "${newProduct.nom}" ajouté.')),
-          );
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Article "${newProduct.nom}" ajouté.')),
+        );
       }
     }
   }
@@ -195,19 +207,42 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
         if (index != -1) {
           _produitsSource[index] = updatedProduit;
           _filterProduits(); // Update the filtered list
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Article "${updatedProduit.nom}" mis à jour.')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('Erreur: Article non trouvé pour la mise à jour.')),
-          );
         }
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Article "${updatedProduit.nom}" mis à jour.')),
+      );
+    }
+  }
+
+  Future<void> _deleteArticle(ProduitVendeur produit) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Call the API service to delete the product
+      await _apiService.deleteProduct(produit.id);
+
+      if (mounted) {
+        setState(() {
+          _produitsSource.removeWhere((p) => p.id == produit.id);
+          _produitsFiltres.removeWhere((p) => p.id == produit.id);
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Article "${produit.nom}" supprimé.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la suppression: $e')),
+        );
+      }
     }
   }
 
@@ -232,66 +267,25 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
     );
 
     if (shouldDelete == true && mounted) {
-      setState(() {
-        _produitsSource.removeWhere((p) => p.id == produit.id);
-        _filterProduits();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Article "${produit.nom}" supprimé.')),
-        );
-      });
+      _deleteArticle(produit);
     }
+  }
+
+  // Pull to refresh functionality
+  Future<void> _refreshProducts() async {
+    await _fetchProducts();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: SvgPicture.asset('assets/images/logo.svg', height: 55),
+        title: const Text('Gestion des Articles'),
+        backgroundColor: const Color(0xFF2C6149),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFF5D9C88)),
-            onPressed: () async {
-              final shouldLogout = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Se déconnecter?'),
-                  content:
-                      const Text('Êtes-vous sûr de vouloir vous déconnecter?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Annuler'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Déconnexion',
-                          style: TextStyle(color: Color(0xFF5D9C88))),
-                    ),
-                  ],
-                ),
-              );
-
-              if (shouldLogout == true) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('currentUser');
-                await prefs.remove('currentUserType');
-
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ConnexionPage()),
-                    (route) => false,
-                  );
-                }
-              }
-            },
-          ),
+          // Add the profile logout widget to the app bar
+          const ProfileLogoutWidget(),
+          const SizedBox(width: 10),
         ],
       ),
       body: SafeArea(
@@ -324,83 +318,119 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
                               hintStyle: TextStyle(color: Colors.grey))))),
               const SizedBox(height: 20),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5D9C88).withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  child: _produitsFiltres.isEmpty
-                      ? Center(
-                          child: Text(
-                          _searchController.text.isEmpty
-                              ? 'Aucun article à gérer.'
-                              : 'Aucun article trouvé pour "${_searchController.text}"',
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ))
-                      : ListView.builder(
-                          itemCount: _produitsFiltres.length,
-                          itemBuilder: (context, index) {
-                            final produit = _produitsFiltres[index];
-                            return Dismissible(
-                              key: Key(produit.id),
-                              background: Container(
-                                color: Colors.red,
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 20),
-                                child: const Icon(Icons.delete,
-                                    color: Colors.white),
+                child: _isLoading
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: Color(0xFF5D9C88)),
+                      )
+                    : _errorMessage != null
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: Colors.red, size: 60),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                      color: Colors.red, fontSize: 16),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: _fetchProducts,
+                                  child: const Text('Réessayer'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF5D9C88),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _refreshProducts,
+                            child: Container(
+                              padding: const EdgeInsets.all(10.0),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF5D9C88).withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(20.0),
                               ),
-                              direction: DismissDirection.endToStart,
-                              confirmDismiss: (direction) async {
-                                return await showDialog<bool>(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text(
-                                          "Confirmer la suppression"),
-                                      content: Text(
-                                          "Êtes-vous sûr de vouloir supprimer l'article \"${produit.nom}\"?"),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: const Text("ANNULER"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
-                                          child: const Text("SUPPRIMER",
-                                              style:
-                                                  TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              onDismissed: (direction) {
-                                setState(() {
-                                  _produitsSource
-                                      .removeWhere((p) => p.id == produit.id);
-                                  _filterProduits();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Article "${produit.nom}" supprimé')),
-                                  );
-                                });
-                              },
-                              child: InkWell(
-                                onTap: () => _navigateToEditPage(produit),
-                                child: ArticleAjouteVendeur.fromModel(produit),
-                              ),
-                            );
-                          },
-                        ),
-                ),
+                              child: _produitsFiltres.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                      _searchController.text.isEmpty
+                                          ? 'Aucun article à gérer.'
+                                          : 'Aucun article trouvé pour "${_searchController.text}"',
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 16),
+                                      textAlign: TextAlign.center,
+                                    ))
+                                  : ListView.builder(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      itemCount: _produitsFiltres.length,
+                                      itemBuilder: (context, index) {
+                                        final produit = _produitsFiltres[index];
+                                        return Dismissible(
+                                          key: Key(produit.id),
+                                          background: Container(
+                                            color: Colors.red,
+                                            alignment: Alignment.centerRight,
+                                            padding: const EdgeInsets.only(
+                                                right: 20),
+                                            child: const Icon(Icons.delete,
+                                                color: Colors.white),
+                                          ),
+                                          direction:
+                                              DismissDirection.endToStart,
+                                          confirmDismiss: (direction) async {
+                                            return await showDialog<bool>(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: const Text(
+                                                      "Confirmer la suppression"),
+                                                  content: Text(
+                                                      "Êtes-vous sûr de vouloir supprimer l'article \"${produit.nom}\"?"),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(context)
+                                                              .pop(false),
+                                                      child:
+                                                          const Text("ANNULER"),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(context)
+                                                              .pop(true),
+                                                      child: const Text(
+                                                          "SUPPRIMER",
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.red)),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          onDismissed: (direction) {
+                                            _deleteArticle(produit);
+                                          },
+                                          child: InkWell(
+                                            onTap: () =>
+                                                _navigateToEditPage(produit),
+                                            child:
+                                                ArticleAjouteVendeur.fromModel(
+                                                    produit),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(

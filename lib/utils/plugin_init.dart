@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Initializes plugins that require platform-specific initialization
 class PluginInitializer {
@@ -26,6 +27,11 @@ class PluginInitializer {
     } catch (e) {
       print('Error initializing plugins: $e');
     }
+
+    // Pre-load SharedPreferences instance
+    await SharedPreferences.getInstance();
+
+    // Here you can add initialization for other plugins if needed
   }
 
   /// Initialize Geolocator specifically for web platforms

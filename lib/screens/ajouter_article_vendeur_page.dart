@@ -10,6 +10,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../models/produit_vendeur.dart';
 import '../services/barcode_scanner_service.dart';
+import '../services/api_service.dart'; // Ajout du service API
 
 class AjouterArticleVendeurPage extends StatefulWidget {
   final String? initialBarcode;
@@ -33,6 +34,13 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
 
   XFile? _pickedImage;
   Future<Uint8List>? _webImageFuture; // For web preview
+
+  // Instances du service API
+  final ApiService _apiService = ApiService();
+
+  // État de chargement de la requête API
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -131,82 +139,71 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
     }
   }
 
-  // --- Save Article Logic (MODIFIED to return new product) ---
+  // --- Save Article Logic (MISE À JOUR pour utiliser l'API) ---
   Future<void> _saveArticle() async {
     // Optional: Validate form
-    // if (!(_formKey.currentState?.validate() ?? false)) {
-    //   return;
-    // }
-
-    String? finalImagePath; // The path to be saved (primarily for mobile)
-
-    // 1. Copy the image if one was picked (Mobile Only for file saving)
-    if (_pickedImage != null && !kIsWeb) {
-      try {
-        final Directory appDocumentsDir =
-            await getApplicationDocumentsDirectory();
-        final String originalFileName = p.basename(_pickedImage!.path);
-        // Create a unique filename
-        final String uniqueFileName =
-            '${DateTime.now().millisecondsSinceEpoch}_$originalFileName';
-        final String destinationPath =
-            p.join(appDocumentsDir.path, uniqueFileName);
-
-        final File destinationFile = File(destinationPath);
-        // Read bytes from XFile and write to the new file location
-        await destinationFile.writeAsBytes(await _pickedImage!.readAsBytes());
-        finalImagePath = destinationPath; // Store the path in app documents dir
-        print('Image copied to (Mobile): $finalImagePath');
-      } catch (e) {
-        print('Error saving image (Mobile): $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Erreur lors de la sauvegarde de l\'image: $e')),
-          );
-        }
-        return; // Stop saving if image copy failed
-      }
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
     }
-    // On Web, finalImagePath remains null if a new image was picked,
-    // as we don't save a file path directly.
 
-    // 2. Gather other form data
-    final barcode = _barcodeController.text;
+    // Get values from controllers
     final name = _nameController.text;
-    // Add validation or default values if needed
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Le nom de l\'article est requis.')));
       return;
     }
+    final barcode = _barcodeController.text;
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final price = double.tryParse(_priceController.text) ?? 0.0;
     final description = _descriptionController.text;
 
-    // 3. Create the new ProduitVendeur object
-    // Generate a unique ID - using timestamp for simplicity here
-    // For production, consider the 'uuid' package:
-    // final String newId = Uuid().v4();
-    final String newId = DateTime.now().toIso8601String();
-
+    // Create product object
     final ProduitVendeur newProduct = ProduitVendeur(
-      id: newId, // Assign the generated unique ID
+      id: '', // L'ID sera généré par le backend
       nom: name,
       quantite: quantity,
       prix: price,
       barcode: barcode.isEmpty ? null : barcode,
       description: description.isEmpty ? null : description,
-      imageUrl: finalImagePath, // This will be null on web if new image picked
+      imageUrl: null, // L'URL de l'image sera générée par le backend
     );
 
-    // 4. Show feedback & Pop screen, returning the new product
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Article ajouté (Simulation)')),
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call API to add product with image
+      final ProduitVendeur addedProduct = await _apiService.addProduct(
+        newProduct,
+        imageFile: _pickedImage,
       );
-      // Return the newly created product data to the previous screen
-      Navigator.of(context).pop(newProduct); // <-- RETURN THE OBJECT
+
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Article ajouté avec succès')));
+
+        // Return to previous screen with new product
+        Navigator.of(context).pop(addedProduct);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _errorMessage = e.toString();
+        });
+
+        // Show error message
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur: $_errorMessage')));
+      }
     }
   }
   // --- End of Save Article Logic ---
@@ -272,14 +269,52 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
         centerTitle: true,
         title: SvgPicture.asset('assets/images/logo.svg', height: 55),
       ),
-      body: _isLoading
+      body: _isLoading || _isSubmitting
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF5D9C88)))
+              child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: Color(0xFF5D9C88)),
+                SizedBox(height: 16),
+                Text("Traitement en cours..."),
+              ],
+            ))
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
+                    // Afficher le message d'erreur s'il y en a un
+                    if (_errorMessage != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline,
+                                color: Colors.red.shade700),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(color: Colors.red.shade700),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              color: Colors.red.shade700,
+                              onPressed: () =>
+                                  setState(() => _errorMessage = null),
+                            )
+                          ],
+                        ),
+                      ),
+
                     Container(
                       /* ... Main Dark Container ... */
                       padding: const EdgeInsets.all(25.0),
@@ -320,14 +355,32 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: inputFillColor,
+                                    hintText:
+                                        'Entrez le code-barre', // Added hint
+                                    hintStyle: TextStyle(
+                                        color: Colors
+                                            .grey[600]), // Added hint style
+                                    enabledBorder: OutlineInputBorder(
+                                      // Added border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[400]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      // Added focused border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF5D9C88), width: 1.5),
+                                    ),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: BorderSide.none,
+                                      // Keep consistent border
+                                      borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10))),
+                                        horizontal: 15,
+                                        vertical: 12))), // Adjusted padding
                             const SizedBox(height: 15),
-                            // Nom d'article (Required field check is in _saveArticle)
+                            // Nom d'article
                             const Text('Nom d\'article:',
                                 style: TextStyle(color: labelColor)),
                             const SizedBox(height: 5),
@@ -337,12 +390,29 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: inputFillColor,
+                                    hintText:
+                                        'Entrez le nom de l\'article', // Added hint
+                                    hintStyle: TextStyle(
+                                        color: Colors
+                                            .grey[600]), // Added hint style
+                                    enabledBorder: OutlineInputBorder(
+                                      // Added border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[400]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      // Added focused border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF5D9C88), width: 1.5),
+                                    ),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10))),
+                                        horizontal: 15,
+                                        vertical: 12))), // Adjusted padding
                             const SizedBox(height: 15),
                             // Quantité
                             const Text('Quantité:',
@@ -358,12 +428,29 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: inputFillColor,
+                                    hintText:
+                                        'Entrez la quantité', // Added hint
+                                    hintStyle: TextStyle(
+                                        color: Colors
+                                            .grey[600]), // Added hint style
+                                    enabledBorder: OutlineInputBorder(
+                                      // Added border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[400]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      // Added focused border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF5D9C88), width: 1.5),
+                                    ),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10))),
+                                        horizontal: 15,
+                                        vertical: 12))), // Adjusted padding
                             const SizedBox(height: 15),
                             // Prix unitaire
                             const Text('Prix unitaire:',
@@ -382,12 +469,29 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: inputFillColor,
+                                    hintText:
+                                        'Entrez le prix (ex: 12.99)', // Added hint
+                                    hintStyle: TextStyle(
+                                        color: Colors
+                                            .grey[600]), // Added hint style
+                                    enabledBorder: OutlineInputBorder(
+                                      // Added border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[400]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      // Added focused border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF5D9C88), width: 1.5),
+                                    ),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10))),
+                                        horizontal: 15,
+                                        vertical: 12))), // Adjusted padding
                             const SizedBox(height: 15),
                             // Description
                             const Text('Description:',
@@ -400,12 +504,29 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
                                 decoration: InputDecoration(
                                     filled: true,
                                     fillColor: inputFillColor,
+                                    hintText:
+                                        'Entrez une description (optionnel)', // Added hint
+                                    hintStyle: TextStyle(
+                                        color: Colors
+                                            .grey[600]), // Added hint style
+                                    enabledBorder: OutlineInputBorder(
+                                      // Added border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[400]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      // Added focused border style
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF5D9C88), width: 1.5),
+                                    ),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: BorderSide.none,
+                                      borderRadius: BorderRadius.circular(12.0),
                                     ),
                                     contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 15, vertical: 10))),
+                                        horizontal: 15,
+                                        vertical: 12))), // Adjusted padding
                             const SizedBox(height: 25),
 
                             // --- Image Display and Upload Button ---
@@ -466,12 +587,17 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
 
                     // --- Save Button ---
                     ElevatedButton.icon(
-                      onPressed: _saveArticle, // Calls the save function
+                      onPressed: _isSubmitting
+                          ? null
+                          : _saveArticle, // Disable when submitting
                       icon: const Icon(Icons.save, color: Colors.white),
-                      label: const Text('Sauvegarder',
-                          style: TextStyle(color: Colors.white, fontSize: 16)),
+                      label: Text(
+                          _isSubmitting ? 'Enregistrement...' : 'Sauvegarder',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16)),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF3a3a3a),
+                          disabledBackgroundColor: Colors.grey,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15.0),
                           ),

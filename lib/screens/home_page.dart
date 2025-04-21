@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled/screens/login_page.dart';
 
 import 'package:untitled/widgets/product_card.dart';
 import 'package:untitled/screens/panier_page.dart';
 import 'package:untitled/screens/details_article_page.dart';
-import 'package:untitled/widgets/details_article.dart';
-import 'package:untitled/screens/connexion_page.dart'; // Import for logout redirection
+import 'package:untitled/widgets/details_article.dart'; // Import for logout redirection
+import 'package:untitled/widgets/profile_logout_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -139,22 +140,9 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Builder(
-          builder: (BuildContext context) {
-            return Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF5D9C88),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
-            );
-          },
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: ProfileLogoutWidget(),
         ),
         centerTitle: true,
         title: SvgPicture.asset(
@@ -174,43 +162,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF5D9C88)),
-              child: Text(
-                'Menu ShopEase',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            // Logout option
-            ListTile(
-              leading: const Icon(Icons.logout, color: Color(0xFF5D9C88)),
-              title: const Text('Déconnexion'),
-              onTap: () async {
-                // Clear user session
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('currentUser');
-                await prefs.remove('currentUserType');
-
-                if (context.mounted) {
-                  // Close drawer
-                  Navigator.pop(context);
-                  // Navigate to login page and remove all previous routes
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ConnexionPage()),
-                    (route) => false, // Remove all previous routes
-                  );
-                }
-              },
-            ),
-            // Additional drawer items can be added here
-          ],
-        ),
-      ),
+      // No more drawer since we're using ProfileLogoutWidget
 
       // Corps principal
       body: Column(
