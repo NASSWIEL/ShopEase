@@ -207,6 +207,81 @@ def delete_image_from_cloudinary(image_url: str) -> bool:
         print(f"Error deleting from Cloudinary: {e}")
         return False
 
+# Function to check stock and update product quantities
+async def check_and_update_stock(products: List[dict]) -> bool:
+    """
+    Check if all products in the order have sufficient stock and update the stock levels.
+    Returns True if all products are available and stock is updated, False otherwise.
+    """
+    transaction = db.transaction()
+    
+    @firestore.transactional
+    def update_in_transaction(transaction, products):
+        insufficient_stock = []
+        product_updates = {}
+        
+        # First check all products have sufficient stock
+        for item in products:
+            product_id = item.get('product_id')
+            quantity = item.get('quantity', 1)
+            
+            if not product_id or quantity <= 0:
+                raise ValueError(f"Invalid product data: {item}")
+                
+            product_ref = db.collection('products').document(product_id)
+            product_doc = product_ref.get(transaction=transaction)
+            
+            if not product_doc.exists:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Product {product_id} not found"
+                )
+                
+            product_data = product_doc.to_dict()
+            current_stock = product_data.get('stock', 0)
+            
+            if current_stock < quantity:
+                insufficient_stock.append({
+                    'product_id': product_id,
+                    'name': product_data.get('name', 'Unknown'),
+                    'requested': quantity,
+                    'available': current_stock
+                })
+            else:
+                # Store the update to apply later
+                product_updates[product_id] = {
+                    'ref': product_ref,
+                    'new_stock': current_stock - quantity
+                }
+        
+        # If any product has insufficient stock, abort the transaction
+        if insufficient_stock:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    'message': 'Insufficient stock for some products',
+                    'products': insufficient_stock
+                }
+            )
+            
+        # Update all products' stock levels
+        for product_id, update_info in product_updates.items():
+            transaction.update(update_info['ref'], {'stock': update_info['new_stock']})
+            
+        return True
+        
+    try:
+        return update_in_transaction(transaction, products)
+    except HTTPException as e:
+        # Re-raise HTTP exceptions directly
+        raise e
+    except Exception as e:
+        print(f"Error in stock transaction: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update stock: {str(e)}"
+        )
+
 # Auth endpoints
 @app.post("/auth/register", response_model=LoginResponse)
 async def register_user(user: UserCreate):
@@ -539,19 +614,45 @@ async def delete_product(
 # Order endpoints
 @app.post("/orders/")
 async def create_order(order: Order, current_user: dict = Depends(get_current_user)):
-    # Create order document
-    order_dict = order.dict(exclude={"id"})
-    order_dict["user_id"] = current_user["id"]
-    order_dict["created_at"] = firestore.SERVER_TIMESTAMP
-    
-    # Add to Firestore
-    doc_ref = db.collection('orders').document()
-    doc_ref.set(order_dict)
-    
-    # Return created order
-    created_order = order_dict.copy()
-    created_order["id"] = doc_ref.id
-    return created_order
+    try:
+        # Extract products from the order
+        products = order.products
+        
+        # Check and update stock levels in a transaction
+        await check_and_update_stock(products)
+        
+        # Create order document once stock is confirmed and updated
+        order_dict = order.dict(exclude={"id"})
+        order_dict["user_id"] = current_user["id"]
+        order_dict["created_at"] = firestore.SERVER_TIMESTAMP
+        
+        # Add delivery address if not present
+        if "delivery_address" not in order_dict and hasattr(order, "delivery_address"):
+            order_dict["delivery_address"] = order.delivery_address
+        
+        # Add to Firestore
+        doc_ref = db.collection('orders').document()
+        doc_ref.set(order_dict)
+        
+        # Return created order
+        created_order = order_dict.copy()
+        created_order["id"] = doc_ref.id
+        
+        # Format timestamps for serialization
+        if "created_at" in created_order:
+            created_order["created_at"] = datetime.now().isoformat()
+            
+        return created_order
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        print(f"Error creating order: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create order: {str(e)}"
+        )
 
 @app.get("/orders/")
 async def get_user_orders(current_user: dict = Depends(get_current_user)):

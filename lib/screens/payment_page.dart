@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:untitled/models/cart.dart';
+import 'package:untitled/models/cart_item.dart';
 import 'package:untitled/screens/home_page.dart';
+import 'package:untitled/services/order_service.dart';
 
 class PaymentPage extends StatefulWidget {
   final String deliveryAddress;
@@ -18,6 +22,10 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   final _formKey = GlobalKey<FormState>();
   late double _cartTotal;
+  final OrderService _orderService = OrderService();
+  bool _isProcessingPayment = false;
+  bool _isProcessingOrder = false;
+  String? _errorMessage;
 
   // Controllers for the text fields
   final TextEditingController _cardNumberController = TextEditingController();
@@ -63,6 +71,51 @@ class _PaymentPageState extends State<PaymentPage> {
       setState(() => _cardType = 'Discover');
     } else {
       setState(() => _cardType = '');
+    }
+  }
+
+  // Process the order with the backend
+  Future<bool> _processOrder() async {
+    setState(() {
+      _isProcessingOrder = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final cart = Provider.of<Cart>(context, listen: false);
+      final cartItems = cart.items.values.toList();
+
+      // Convert cart items to order items
+      final orderItems = cartItems
+          .map((item) => OrderItem(
+                productId: item.id,
+                quantity: item.quantity,
+                price: item.price,
+                name: item.name,
+              ))
+          .toList();
+
+      // Create order using the order service
+      await _orderService.createOrder(
+        orderItems,
+        _cartTotal,
+        widget.deliveryAddress,
+      );
+
+      // Clear the cart after successful order
+      cart.clear();
+
+      return true;
+    } catch (e) {
+      print("Error creating order: $e");
+      setState(() {
+        _errorMessage = "Failed to process order: ${e.toString()}";
+      });
+      return false;
+    } finally {
+      setState(() {
+        _isProcessingOrder = false;
+      });
     }
   }
 
@@ -163,6 +216,29 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Error message if any
+            if (_errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red.shade900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Payment Method Section
             Form(
@@ -435,12 +511,14 @@ class _PaymentPageState extends State<PaymentPage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isProcessing
+                      onPressed: (_isProcessing || _isProcessingOrder)
                           ? null
                           : () async {
                               if (_formKey.currentState!.validate()) {
                                 setState(() {
                                   _isProcessing = true;
+                                  _isProcessingPayment = true;
+                                  _errorMessage = null;
                                 });
 
                                 // Show processing message
@@ -456,8 +534,14 @@ class _PaymentPageState extends State<PaymentPage> {
                                 await Future.delayed(
                                     const Duration(seconds: 2));
 
-                                // Show success message and navigate to home
-                                if (context.mounted) {
+                                setState(() {
+                                  _isProcessingPayment = false;
+                                });
+
+                                // Process the order with the backend
+                                final orderSuccess = await _processOrder();
+
+                                if (orderSuccess && context.mounted) {
                                   // Show success dialog
                                   showDialog(
                                     context: context,
@@ -496,6 +580,10 @@ class _PaymentPageState extends State<PaymentPage> {
                                       );
                                     },
                                   );
+                                } else {
+                                  setState(() {
+                                    _isProcessing = false;
+                                  });
                                 }
                               }
                             },
@@ -507,7 +595,26 @@ class _PaymentPageState extends State<PaymentPage> {
                         elevation: 2,
                       ),
                       child: _isProcessing
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  _isProcessingPayment
+                                      ? 'Traitement du paiement...'
+                                      : 'Création de la commande...',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            )
                           : const Text(
                               'Payer maintenant',
                               style: TextStyle(

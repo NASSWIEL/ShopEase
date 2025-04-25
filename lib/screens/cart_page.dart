@@ -1,42 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/screens/livraison_adresse_page.dart';
+import 'package:provider/provider.dart';
+import 'package:untitled/models/cart.dart';
+import 'package:untitled/models/cart_item.dart';
 
 class CartPage extends StatefulWidget {
+  const CartPage({Key? key}) : super(key: key);
+
   @override
   _CartPageState createState() => _CartPageState();
 }
 
 class _CartPageState extends State<CartPage> {
-  List<Map<String, dynamic>> cartItems = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Add some example items to the cart for testing
-    cartItems = [
-      {
-        'name': 'Product 1',
-        'price': 29.99,
-        'quantity': 2,
-      },
-      {
-        'name': 'Product 2',
-        'price': 19.99,
-        'quantity': 1,
-      },
-      {
-        'name': 'Product 3',
-        'price': 9.99,
-        'quantity': 3,
-      },
-    ];
-  }
-
   // Calculate the total cart value
-  double calculateTotal() {
+  double calculateTotal(List<CartItem> cartItems) {
     double total = 0;
     for (var item in cartItems) {
-      total += (item['price'] as double) * (item['quantity'] as int);
+      total += item.price * item.quantity;
     }
     print("Calculated cart total: $total");
     return total;
@@ -44,16 +24,19 @@ class _CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cart = Provider.of<Cart>(context);
+    final cartItems = cart.items.values.toList();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cart'),
+        title: const Text('Cart'),
         backgroundColor: const Color(0xFF5D9C88),
       ),
       body: cartItems.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: const [
                   Icon(Icons.shopping_cart_outlined,
                       size: 80, color: Colors.grey),
                   SizedBox(height: 20),
@@ -72,26 +55,79 @@ class _CartPageState extends State<CartPage> {
               itemBuilder: (context, index) {
                 final item = cartItems[index];
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: ListTile(
-                    contentPadding: EdgeInsets.all(10),
+                    contentPadding: const EdgeInsets.all(10),
                     leading: Container(
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: Color(0xFFE0F2F1),
+                        color: const Color(0xFFE0F2F1),
                         borderRadius: BorderRadius.circular(8),
+                        image:
+                            item.imageUrl != null && item.imageUrl!.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(item.imageUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                       ),
-                      child: Icon(Icons.shopping_bag, color: Color(0xFF5D9C88)),
+                      child: item.imageUrl == null || item.imageUrl!.isEmpty
+                          ? const Icon(Icons.shopping_bag,
+                              color: Color(0xFF5D9C88))
+                          : null,
                     ),
                     title: Text(
-                      item['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      item.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text('Quantity: ${item['quantity']}'),
+                    subtitle: Row(
+                      children: [
+                        Text('Quantity: ${item.quantity}'),
+                        const Spacer(),
+                        // Add quantity controls
+                        IconButton(
+                          icon: const Icon(Icons.remove, size: 20),
+                          onPressed: () {
+                            if (item.quantity > 1) {
+                              cart.decrementQuantity(item.id);
+                            } else {
+                              // Show confirmation dialog before removing
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Remove item?'),
+                                  content: const Text(
+                                      'Do you want to remove this item from the cart?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        cart.removeItem(item.id);
+                                        Navigator.of(ctx).pop();
+                                      },
+                                      child: const Text('Remove'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                        Text('${item.quantity}'),
+                        IconButton(
+                          icon: const Icon(Icons.add, size: 20),
+                          onPressed: () => cart.incrementQuantity(item.id),
+                        ),
+                      ],
+                    ),
                     trailing: Text(
-                      '${item['price']} €',
-                      style: TextStyle(
+                      '${item.price} €',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Color(0xFF5D9C88),
@@ -103,10 +139,10 @@ class _CartPageState extends State<CartPage> {
             ),
       bottomNavigationBar: cartItems.isNotEmpty
           ? Container(
-              padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
@@ -115,7 +151,7 @@ class _CartPageState extends State<CartPage> {
                     color: Colors.grey.withOpacity(0.3),
                     spreadRadius: 1,
                     blurRadius: 5,
-                    offset: Offset(0, -2),
+                    offset: const Offset(0, -2),
                   ),
                 ],
               ),
@@ -126,7 +162,7 @@ class _CartPageState extends State<CartPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Total:',
                         style: TextStyle(
                           fontSize: 14,
@@ -134,8 +170,8 @@ class _CartPageState extends State<CartPage> {
                         ),
                       ),
                       Text(
-                        '${calculateTotal().toStringAsFixed(2)} €',
-                        style: TextStyle(
+                        '${calculateTotal(cartItems).toStringAsFixed(2)} €',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF5D9C88),
@@ -145,7 +181,7 @@ class _CartPageState extends State<CartPage> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      double cartTotal = calculateTotal();
+                      double cartTotal = calculateTotal(cartItems);
                       print(
                           "Navigating to delivery address page with cart total: $cartTotal");
                       Navigator.push(
@@ -158,14 +194,14 @@ class _CartPageState extends State<CartPage> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF5D9C88),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                      backgroundColor: const Color(0xFF5D9C88),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Checkout',
                       style: TextStyle(
                         fontSize: 16,
