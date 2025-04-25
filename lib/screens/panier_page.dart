@@ -6,7 +6,7 @@ import '../widgets/article_ajoute_panier.dart';
 import './livraison_adresse_page.dart'; // Import the delivery address page
 
 class PanierPage extends StatelessWidget {
-  const PanierPage({Key? key}) : super(key: key);
+  const PanierPage({super.key}); // Updated to use super.key
 
   // Navigate to delivery address page
   void _navigateToDeliveryAddress(BuildContext context, {String? productId}) {
@@ -20,15 +20,18 @@ class PanierPage extends StatelessWidget {
       if (result != null && result is Map<String, dynamic>) {
         // Address was selected, show confirmation
         final address = result['address'];
-        final location = result['location'];
+        // Removed unused location variable
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Livraison confirmée à: $address'),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(label: 'OK', onPressed: () {}),
-          ),
-        );
+        // Verify context is still valid before using it
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Livraison confirmée à: $address'),
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(label: 'OK', onPressed: () {}),
+            ),
+          );
+        }
       }
     });
   }
@@ -109,9 +112,13 @@ class PanierPage extends StatelessWidget {
                           );
                           return false; // Don't actually dismiss the item
                         },
+                        // Updated to use the correct constructor parameters
                         child: ArticleAjoutePanier(
-                          cartItem: cartItem,
                           productId: productId,
+                          productName: cartItem.name,
+                          price: cartItem.price,
+                          quantity: cartItem.quantity,
+                          imageUrl: cartItem.imageUrl,
                         ),
                       );
                     },

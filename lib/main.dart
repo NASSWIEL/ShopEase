@@ -11,6 +11,7 @@ import 'models/cart.dart';
 import 'providers/auth_provider.dart'; // Import the auth provider
 import 'utils/plugin_init.dart'; // Import the plugin initializer
 import 'package:untitled/config/network_config.dart'; // Import network config
+import 'package:untitled/screens/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
@@ -49,9 +50,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ShopEase',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home:
-          const SplashScreen(), // Changed to SplashScreen as the initial route
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        primaryColor: const Color(0xFF5D9C88),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF5D9C88),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      home: const LoginPage(),
     );
   }
 }

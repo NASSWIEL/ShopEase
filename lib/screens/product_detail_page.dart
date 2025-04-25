@@ -6,7 +6,7 @@ import '../models/cart.dart';
 class ProductDetailPage extends StatelessWidget {
   final Product product;
 
-  const ProductDetailPage({Key? key, required this.product}) : super(key: key);
+  const ProductDetailPage({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -102,24 +102,21 @@ class ProductDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...product.specs!.entries
-                              .map((entry) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '• ${entry.key}: ',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Expanded(child: Text(entry.value)),
-                                      ],
+                          ...product.specs!.entries.map((entry) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '• ${entry.key}: ',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ))
-                              .toList(),
+                                    Expanded(child: Text(entry.value)),
+                                  ],
+                                ),
+                              )),
                           const SizedBox(height: 16),
                         ],
                       ),
@@ -141,10 +138,15 @@ class ProductDetailPage extends StatelessWidget {
             ),
             onPressed: () {
               final cart = Provider.of<Cart>(context, listen: false);
-              cart.addItem(
+              // Use the updated addItems method with proper parameters
+              final price = double.tryParse(
+                      product.price.replaceAll('\$', '').replaceAll('€', '')) ??
+                  0.0;
+
+              cart.addItems(
                 product.id,
                 product.name,
-                double.parse(product.price.replaceAll('\$', '')),
+                price,
                 product.imageUrl,
               );
 

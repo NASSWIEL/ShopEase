@@ -77,9 +77,15 @@ class OrderService {
   ) async {
     final client = _createCustomClient();
     final token = await _apiService.getAuthToken();
+    final userData = await _apiService.getUserData();
 
     if (token == null) {
       throw Exception('User not authenticated');
+    }
+
+    // Make sure we have user data
+    if (userData == null || userData['id'] == null) {
+      throw Exception('User information is missing');
     }
 
     try {
@@ -96,9 +102,14 @@ class OrderService {
             'total_price': totalPrice,
             'status': 'pending',
             'delivery_address': deliveryAddress,
+            'user_id': userData[
+                'id'], // Include user_id from the authenticated user data
           }),
         ),
       );
+
+      print('Order creation response status: ${response.statusCode}');
+      print('Order creation response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = json.decode(response.body);

@@ -4,41 +4,40 @@ import '../models/cart.dart';
 import '../screens/panier_page.dart';
 
 class DetailsArticle extends StatefulWidget {
-  final String id; // Add this
+  final String id;
   final String articleName;
   final double price;
   final String description;
   final String imageUrl;
-  final VoidCallback? onAddToCart; // Make this optional
+  final VoidCallback? onAddToCart;
 
   const DetailsArticle({
-    Key? key,
-    required this.id, // Add this
+    super.key, // Changed to super parameter
+    required this.id,
     required this.articleName,
     required this.price,
     required this.description,
     required this.imageUrl,
-    this.onAddToCart, // Make this optional
-  }) : super(key: key);
+    this.onAddToCart,
+  });
 
   @override
   State<DetailsArticle> createState() => _DetailsArticleState();
 }
 
 class _DetailsArticleState extends State<DetailsArticle> {
-  int quantity = 1; // Add quantity state
+  int quantity = 1;
 
   void _handleAddToCart(BuildContext context) {
     // Get the cart from provider
     final cart = Provider.of<Cart>(context, listen: false);
 
-    // Add to cart with the current quantity
+    // Fix: Remove the quantity parameter as it's not expected by the addItems method
     cart.addItems(
       widget.id,
       widget.articleName,
       widget.price,
       widget.imageUrl,
-      quantity,
     );
 
     // Show feedback to user

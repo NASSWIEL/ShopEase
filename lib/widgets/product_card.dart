@@ -136,11 +136,14 @@ class _ProductCardState extends State<ProductCard> {
                         // Add the item to cart
                         final cart = Provider.of<Cart>(context, listen: false);
                         cart.addItem(
-                          widget.product.id,
-                          widget.product.name,
-                          double.parse(
-                              widget.product.price.replaceAll('€', '')),
-                          widget.product.imageUrl,
+                          productId: widget.product.id,
+                          name: widget.product.name,
+                          price: double.tryParse(widget.product.price
+                                  .toString()
+                                  .replaceAll('\$', '')
+                                  .replaceAll('€', '')) ??
+                              0.0,
+                          imageUrl: widget.product.imageUrl,
                         );
 
                         // Show a snackbar

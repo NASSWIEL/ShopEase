@@ -11,13 +11,13 @@ class DetailArticle extends StatefulWidget {
   final String description;
 
   const DetailArticle({
-    Key? key,
+    super.key, // Updated to use super parameter
     required this.id,
     required this.name,
     required this.price,
     required this.imageUrl,
     required this.description,
-  }) : super(key: key);
+  });
 
   @override
   State<DetailArticle> createState() => _DetailArticleState();
@@ -33,8 +33,8 @@ class _DetailArticleState extends State<DetailArticle> {
     // Parse the price (removing $ symbol)
     final price = double.parse(widget.price.replaceAll('\$', ''));
 
-    // Use the addItems method to add products with quantity
-    cart.addItems(widget.id, widget.name, price, widget.imageUrl, quantity);
+    // Use the addItems method to add products - removed the quantity parameter
+    cart.addItems(widget.id, widget.name, price, widget.imageUrl);
 
     // Show feedback to user with a snackbar
     ScaffoldMessenger.of(context).hideCurrentSnackBar();

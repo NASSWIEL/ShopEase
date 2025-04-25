@@ -1,61 +1,62 @@
 import 'package:flutter/foundation.dart';
-
-class CartItem {
-  final String id;
-  final String title;
-  final int quantity;
-  final double price;
-  final String imageUrl;
-
-  CartItem({
-    required this.id,
-    required this.title,
-    required this.quantity,
-    required this.price,
-    required this.imageUrl,
-  });
-}
+import 'package:untitled/models/cart_item.dart';
 
 class Cart with ChangeNotifier {
+  // Map of product id to cart item
   Map<String, CartItem> _items = {};
 
+  // Getter for the items
   Map<String, CartItem> get items {
     return {..._items};
   }
 
+  // Get the total number of items in cart
   int get itemCount {
     return _items.length;
   }
 
+  // Get the total quantity of all items
+  int get totalQuantity {
+    int total = 0;
+    _items.forEach((key, cartItem) {
+      total += cartItem.quantity;
+    });
+    return total;
+  }
+
+  // Get the total price of all items
   double get totalAmount {
-    var total = 0.0;
+    double total = 0.0;
     _items.forEach((key, cartItem) {
       total += cartItem.price * cartItem.quantity;
     });
     return total;
   }
 
-  void addItem(String productId, String title, double price, String imageUrl) {
+  // Add item to cart - supporting multiple method signatures to fix compatibility issues
+  void addItem({
+    required String productId,
+    required double price,
+    required String name,
+    String? imageUrl,
+  }) {
     if (_items.containsKey(productId)) {
-      // Change quantity
+      // If item already exists, just increase quantity
       _items.update(
         productId,
-        (existingCartItem) => CartItem(
-          id: existingCartItem.id,
-          title: existingCartItem.title,
+        (existingCartItem) => existingCartItem.copyWith(
           quantity: existingCartItem.quantity + 1,
-          price: existingCartItem.price,
-          imageUrl: existingCartItem.imageUrl,
         ),
       );
     } else {
+      // Otherwise add a new item
       _items.putIfAbsent(
         productId,
         () => CartItem(
-          id: DateTime.now().toString(),
-          title: title,
+          id: productId,
+          name: name,
+          price: price,
           quantity: 1,
-          price: price,
           imageUrl: imageUrl,
         ),
       );
@@ -63,59 +64,27 @@ class Cart with ChangeNotifier {
     notifyListeners();
   }
 
-  // Add a new method to add multiple items at once
-  void addItems(
-    String productId,
-    String title,
-    double price,
-    String imageUrl,
-    int quantity,
-  ) {
-    if (_items.containsKey(productId)) {
-      // Change quantity
-      _items.update(
-        productId,
-        (existingCartItem) => CartItem(
-          id: existingCartItem.id,
-          title: existingCartItem.title,
-          quantity: existingCartItem.quantity + quantity,
-          price: existingCartItem.price,
-          imageUrl: existingCartItem.imageUrl,
-        ),
-      );
-    } else {
-      _items.putIfAbsent(
-        productId,
-        () => CartItem(
-          id: DateTime.now().toString(),
-          title: title,
-          quantity: quantity,
-          price: price,
-          imageUrl: imageUrl,
-        ),
-      );
-    }
-    notifyListeners();
+  // Alternate signature for addItem - used in product_detail_page.dart
+  void addItems(String id, String name, double price, String imageUrl) {
+    addItem(
+      productId: id,
+      name: name,
+      price: price,
+      imageUrl: imageUrl,
+    );
   }
 
-  void removeItem(String productId) {
-    _items.remove(productId);
-    notifyListeners();
-  }
-
+  // Remove a single item - used in product_detail_page.dart
   void removeSingleItem(String productId) {
     if (!_items.containsKey(productId)) {
       return;
     }
+
     if (_items[productId]!.quantity > 1) {
       _items.update(
         productId,
-        (existingCartItem) => CartItem(
-          id: existingCartItem.id,
-          title: existingCartItem.title,
+        (existingCartItem) => existingCartItem.copyWith(
           quantity: existingCartItem.quantity - 1,
-          price: existingCartItem.price,
-          imageUrl: existingCartItem.imageUrl,
         ),
       );
     } else {
@@ -124,6 +93,43 @@ class Cart with ChangeNotifier {
     notifyListeners();
   }
 
+  // Increment quantity of an item
+  void incrementQuantity(String productId) {
+    if (_items.containsKey(productId)) {
+      _items.update(
+        productId,
+        (existingCartItem) => existingCartItem.copyWith(
+          quantity: existingCartItem.quantity + 1,
+        ),
+      );
+      notifyListeners();
+    }
+  }
+
+  // Decrement quantity of an item
+  void decrementQuantity(String productId) {
+    if (_items.containsKey(productId)) {
+      if (_items[productId]!.quantity > 1) {
+        _items.update(
+          productId,
+          (existingCartItem) => existingCartItem.copyWith(
+            quantity: existingCartItem.quantity - 1,
+          ),
+        );
+      } else {
+        _items.remove(productId);
+      }
+      notifyListeners();
+    }
+  }
+
+  // Remove item from cart
+  void removeItem(String productId) {
+    _items.remove(productId);
+    notifyListeners();
+  }
+
+  // Clear cart
   void clear() {
     _items = {};
     notifyListeners();

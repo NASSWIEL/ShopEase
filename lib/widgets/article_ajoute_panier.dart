@@ -1,41 +1,30 @@
-// lib/widgets/article_ajoute_panier.dart (Corrected - No Navigation)
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/cart.dart';
+import 'package:untitled/models/cart.dart';
+import 'package:untitled/models/cart_item.dart';
 
 class ArticleAjoutePanier extends StatelessWidget {
-  final CartItem cartItem;
   final String productId;
+  final String productName;
+  final double price;
+  final String? imageUrl;
+  final int quantity;
 
   const ArticleAjoutePanier({
-    Key? key,
-    required this.cartItem,
+    super.key,
     required this.productId,
-  }) : super(key: key);
+    required this.productName,
+    required this.price,
+    this.imageUrl,
+    required this.quantity,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<Cart>(context, listen: false);
-
     return Dismissible(
-      key: ValueKey(cartItem.id),
-      direction: DismissDirection.horizontal,
+      key: ValueKey(productId),
       background: Container(
         color: Colors.red,
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        margin: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 4,
-        ),
-        child: const Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 30,
-        ),
-      ),
-      secondaryBackground: Container(
-        color: Colors.green,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(
@@ -43,76 +32,39 @@ class ArticleAjoutePanier extends StatelessWidget {
           vertical: 4,
         ),
         child: const Icon(
-          Icons.shopping_cart_checkout,
+          Icons.delete,
           color: Colors.white,
-          size: 30,
+          size: 40,
         ),
       ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) { // Right Swipe - Buy Now
-          return await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Retirer du panier ?'),
-              content: const Text(
-                'Voulez-vous retirer cet article du panier ? ',
-              ),
-              actions: [
-                TextButton(
-                  child: const Text('Non'),
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                ),
-                TextButton(
-                  child: const Text('Oui'),
-                  onPressed: () {
-                    // TODO: Implement "Buy Now" logic here.
-                    print('Buy now action for product ID: $productId');
-                    // For now, let's simulate "buying" by clearing the cart:
-                    cart.clear(); // Clear the cart on "Buy Now"
-                    Navigator.of(ctx).pop(true); // Dismiss Dismissible
-                  },
-                ),
-              ],
-            ),
-          );
-        } else { // Left Swipe - Delete
-          return await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text(' Acheter maintenant ?'),
-              content: const Text(
-                'Voulez-vous procéder à l\'achat de cet article ?',
-              ),
-              actions: [
-                TextButton(
-                  child: const Text('Non'),
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                ),
-                TextButton(
-                  child: const Text('Oui'),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                ),
-              ],
-            ),
-          );
-        }
-      },
+      direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart) { // Left Swipe - Delete
-          cart.removeItem(productId); // Remove item from cart
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${cartItem.title} retiré du panier'),
+        Provider.of<Cart>(context, listen: false).removeItem(productId);
+      },
+      confirmDismiss: (direction) {
+        return showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Êtes-vous sûr?'),
+            content: const Text(
+              'Voulez-vous supprimer cet article du panier?',
             ),
-          );
-        } else if (direction == DismissDirection.startToEnd) { // Right Swipe - Buy Now
-          // Buy Now action is handled in confirmDismiss (cart.clear() is called there)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Achat simulé effectué! Panier vidé.'),
-            ),
-          );
-        }
+            actions: [
+              TextButton(
+                child: const Text('Non'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('Oui'),
+                onPressed: () {
+                  Navigator.of(ctx).pop(true);
+                },
+              ),
+            ],
+          ),
+        );
       },
       child: Card(
         margin: const EdgeInsets.symmetric(
@@ -123,18 +75,74 @@ class ArticleAjoutePanier extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(
-                cartItem.imageUrl,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: FittedBox(
+                  child: Text('\$$price'),
+                ),
               ),
             ),
-            title: Text(cartItem.title),
-            subtitle: Text(
-              'Total: \$${(cartItem.price * cartItem.quantity).toStringAsFixed(2)}',
+            title: Text(productName),
+            subtitle: Text('Total: \$${(price * quantity).toStringAsFixed(2)}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: () {
+                    // TODO: Implement "Buy Now" logic here.
+                    print('Buy now clicked');
+                    Provider.of<Cart>(context, listen: false)
+                        .decrementQuantity(productId);
+                  },
+                ),
+                Text('$quantity'),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    Provider.of<Cart>(context, listen: false)
+                        .incrementQuantity(productId);
+                  },
+                ),
+              ],
             ),
-            trailing: Text('${cartItem.quantity} x'),
           ),
         ),
       ),
     );
   }
+
+  // Factory constructor to create from a CartItem
+  factory ArticleAjoutePanier.fromCartItem(CartItem item) {
+    return ArticleAjoutePanier(
+      productId: item.id,
+      productName: item.title, // Use the title getter we added
+      price: item.price,
+      imageUrl: item.imageUrl,
+      quantity: item.quantity,
+    );
+  }
+
+  // Display the image
+  Widget _buildImage() {
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return Container(
+        width: 80,
+        height: 80,
+        color: Colors.grey[300],
+        child: const Icon(Icons.image, color: Colors.grey),
+      );
+    }
+
+    return Image.network(
+      imageUrlOrDefault,
+      width: 80,
+      height: 80,
+      fit: BoxFit.cover,
+    );
+  }
+
+  // Helper method to get non-null image URL
+  String get imageUrlOrDefault => imageUrl ?? 'https://via.placeholder.com/80';
 }
