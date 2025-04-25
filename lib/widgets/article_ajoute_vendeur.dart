@@ -25,7 +25,7 @@ class ArticleAjouteVendeur extends StatelessWidget {
   // Named constructor to create from ProduitVendeur model
   factory ArticleAjouteVendeur.fromModel(ProduitVendeur produit) {
     return ArticleAjouteVendeur(
-      id: produit.id,
+      id: produit.id ?? produit.idString ?? '', // Ensure id is not null
       nom: produit.nom,
       quantite: produit.quantite,
       prix: produit.prix,

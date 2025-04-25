@@ -133,9 +133,14 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
     });
 
     try {
+      // Get the ID as a string
+      final String productId =
+          widget.produit.idString ?? widget.produit.id.toString();
+      print('Updating product with ID: $productId');
+
       // Call API to update product
       final ProduitVendeur updatedProduct = await _apiService.updateProduct(
-        widget.produit.id,
+        productId,
         updatedProduit,
         imageFile: _newlyPickedImage,
         deleteImage: _imageDeleted && _newlyPickedImage == null,

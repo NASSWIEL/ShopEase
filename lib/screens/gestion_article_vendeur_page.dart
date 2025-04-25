@@ -191,6 +191,9 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
   }
 
   void _navigateToEditPage(ProduitVendeur produitToEdit) async {
+    // Before navigating, log the product details to debug
+    print('Editing product with barcode: ${produitToEdit.barcode}');
+
     final updatedProduit = await Navigator.push<ProduitVendeur>(
       context,
       MaterialPageRoute(
@@ -199,6 +202,9 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
     );
 
     if (updatedProduit != null && mounted) {
+      // Log the updated product to check if barcode is preserved
+      print('Updated product barcode: ${updatedProduit.barcode}');
+
       setState(() {
         // Find the index of the product with matching ID
         final index =
@@ -222,7 +228,7 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
 
     try {
       // Call the API service to delete the product
-      await _apiService.deleteProduct(produit.id);
+      await _apiService.deleteProduct(produit.id.toString());
 
       if (mounted) {
         setState(() {
@@ -280,12 +286,17 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestion des Articles'),
+        centerTitle: true,
+        title: const Text('Gestion des Articles',
+            style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
         backgroundColor: const Color(0xFF2C6149),
-        actions: [
+        actions: const [
           // Add the profile logout widget to the app bar
-          const ProfileLogoutWidget(),
-          const SizedBox(width: 10),
+          ProfileLogoutWidget(),
+          SizedBox(width: 10),
         ],
       ),
       body: SafeArea(
@@ -294,12 +305,6 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 15),
-              const Text('Gestion articles',
-                  style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87)),
               const SizedBox(height: 15),
               Container(
                   height: 45,
@@ -373,7 +378,7 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
                                       itemBuilder: (context, index) {
                                         final produit = _produitsFiltres[index];
                                         return Dismissible(
-                                          key: Key(produit.id),
+                                          key: Key(produit.id.toString()),
                                           background: Container(
                                             color: Colors.red,
                                             alignment: Alignment.centerRight,

@@ -86,6 +86,7 @@ class Product(BaseModel):
     image_url: Optional[str] = None
     stock: int
     vendor_id: str
+    barcode: Optional[str] = None  # Adding barcode field to Product model
     
 class Order(BaseModel):
     id: Optional[str] = None
@@ -413,6 +414,7 @@ async def create_product(
     price: float = Form(...),
     stock: int = Form(...),
     image: UploadFile = File(None),
+    barcode: Optional[str] = Form(None),  # Adding barcode field to product creation
     current_user: dict = Depends(get_current_user)
 ):
     # Ensure user is a vendor
@@ -433,6 +435,7 @@ async def create_product(
         "stock": stock,
         "image_url": image_url,
         "vendor_id": current_user["id"],
+        "barcode": barcode,  # Adding barcode to product document
         # Ne pas utiliser SERVER_TIMESTAMP ici pour éviter les erreurs de sérialisation
         "created_at": datetime.now().isoformat()
     }
@@ -458,6 +461,7 @@ async def update_product(
     stock: int = Form(...),
     image: UploadFile = File(None),
     delete_image: bool = Form(False),
+    barcode: Optional[str] = Form(None),  # Adding barcode field to product update
     current_user: dict = Depends(get_current_user)
 ):
     # Check if product exists
@@ -493,7 +497,8 @@ async def update_product(
         "description": description,
         "price": price,
         "stock": stock,
-        "image_url": image_url if image else (None if delete_image else current_image_url)
+        "image_url": image_url if image else (None if delete_image else current_image_url),
+        "barcode": barcode  # Adding barcode to product update
     }
     db.collection('products').document(product_id).update(update_data)
     

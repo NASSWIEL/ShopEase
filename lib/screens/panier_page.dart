@@ -10,9 +10,12 @@ class PanierPage extends StatelessWidget {
 
   // Navigate to delivery address page
   void _navigateToDeliveryAddress(BuildContext context, {String? productId}) {
+    final cart = Provider.of<Cart>(context, listen: false);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const LivraisonAdressePage()),
+      MaterialPageRoute(
+          builder: (context) =>
+              LivraisonAdressePage(cartTotal: cart.totalAmount)),
     ).then((result) {
       if (result != null && result is Map<String, dynamic>) {
         // Address was selected, show confirmation

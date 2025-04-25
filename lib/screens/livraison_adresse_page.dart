@@ -13,7 +13,7 @@ class LivraisonAdressePage extends StatefulWidget {
 
   const LivraisonAdressePage({
     super.key,
-    this.cartTotal = 0.0, // Default value if not provided
+    required this.cartTotal, // Make it required to ensure a value is always provided
   });
 
   @override
@@ -33,6 +33,7 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
     super.initState();
     _getCurrentLocation();
     _updateMarker();
+    print("LivraisonAdressePage received cart total: ${widget.cartTotal}");
   }
 
   @override
@@ -239,25 +240,24 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
           ),
 
           // Show the cart total
-          if (widget.cartTotal > 0)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  const Text(
-                    'Montant du panier:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${widget.cartTotal.toStringAsFixed(2)} €',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              children: [
+                const Text(
+                  'Montant du panier:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '${widget.cartTotal.toStringAsFixed(2)} €',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
+          ),
 
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -270,6 +270,9 @@ class _LivraisonAdressePageState extends State<LivraisonAdressePage> {
                   );
                   return;
                 }
+
+                // Debug print
+                print("Passing cart total to PaymentPage: ${widget.cartTotal}");
 
                 // Navigate to payment page with address and cart total
                 Navigator.push(

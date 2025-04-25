@@ -5,7 +5,6 @@ import '../screens/panier_page.dart';
 
 class DetailsArticle extends StatefulWidget {
   final String id; // Add this
-  final String category;
   final String articleName;
   final double price;
   final String description;
@@ -15,7 +14,6 @@ class DetailsArticle extends StatefulWidget {
   const DetailsArticle({
     Key? key,
     required this.id, // Add this
-    required this.category,
     required this.articleName,
     required this.price,
     required this.description,
@@ -104,14 +102,7 @@ class _DetailsArticleState extends State<DetailsArticle> {
           const SizedBox(height: 16),
 
           // Catégorie
-          Text(
-            widget.category,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
+
           const SizedBox(height: 8),
 
           // Nom de l'article

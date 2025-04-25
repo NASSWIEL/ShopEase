@@ -17,6 +17,7 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   final _formKey = GlobalKey<FormState>();
+  late double _cartTotal;
 
   // Controllers for the text fields
   final TextEditingController _cardNumberController = TextEditingController();
@@ -28,6 +29,18 @@ class _PaymentPageState extends State<PaymentPage> {
   // Card type (Visa, Mastercard, etc.)
   String _cardType = '';
   bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartTotal = widget.cartTotal;
+    print("PaymentPage received cart total: $_cartTotal");
+
+    // Validate cart total - should never be 0
+    if (_cartTotal <= 0) {
+      print("WARNING: Invalid cart total received: $_cartTotal");
+    }
+  }
 
   @override
   void dispose() {
@@ -110,7 +123,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Montant du panier:'),
-                      Text('${widget.cartTotal.toStringAsFixed(2)} €'),
+                      Text('${_cartTotal.toStringAsFixed(2)} €'),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -137,7 +150,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ),
                       Text(
-                        '${(widget.cartTotal + 5.99).toStringAsFixed(2)} €',
+                        '${(_cartTotal + 5.99).toStringAsFixed(2)} €',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

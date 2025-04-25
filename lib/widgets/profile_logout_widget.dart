@@ -31,21 +31,10 @@ class ProfileLogoutWidget extends StatelessWidget {
             }
           },
           itemBuilder: (BuildContext context) => [
-            PopupMenuItem<String>(
-              value: 'profile',
-              child: Row(
-                children: const [
-                  Icon(Icons.person, color: Color(0xFF5D9C88)),
-                  SizedBox(width: 8),
-                  Text('Profil'),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
+            const PopupMenuItem<String>(
               value: 'logout',
               child: Row(
-                children: const [
+                children: [
                   Icon(Icons.logout, color: Colors.red),
                   SizedBox(width: 8),
                   Text('Déconnexion'),

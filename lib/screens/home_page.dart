@@ -3,11 +3,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled/screens/login_page.dart';
+import 'package:untitled/services/api_service.dart';
+import 'package:untitled/models/produit_vendeur.dart';
+import 'package:untitled/models/product_adapter.dart'; // Import our new adapter
 
 import 'package:untitled/widgets/product_card.dart';
 import 'package:untitled/screens/panier_page.dart';
 import 'package:untitled/screens/details_article_page.dart';
-import 'package:untitled/widgets/details_article.dart'; // Import for logout redirection
+import 'package:untitled/widgets/details_article.dart';
 import 'package:untitled/widgets/profile_logout_widget.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,63 +25,20 @@ class _HomePageState extends State<HomePage> {
   Timer? _debounce;
   String _searchQuery = '';
   bool _isListening = false;
+  bool _isLoading = true;
+  String? _errorMessage;
+  final ApiService _apiService = ApiService();
 
-  // Exemple de liste de produits.
-  // Tu peux ajouter un champ "category" ou "description" si tu les as.
-  final List<Map<String, String>> allProducts = [
-    {
-      'name': 'Nike Futura Core Bucket Hat - Black',
-      'price': '\$29.99',
-      'imageUrl': 'https://picsum.photos/400?1',
-      'description':
-          'Great for casual mode during sunny weather with this Nike Futura bucket hat.',
-      'category': 'Hat',
-    },
-    {
-      'name': 'Product 2',
-      'price': '\$30.00',
-      'imageUrl': 'https://picsum.photos/400?2',
-      'description': 'Short description for product 2.',
-      'category': 'Shirt',
-    },
-    {
-      'name': 'Product 3',
-      'price': '\$30.00',
-      'imageUrl': 'https://picsum.photos/400?2',
-      'description': 'Short description for product 2.',
-      'category': 'Shirt',
-    },
-    {
-      'name': 'Product 4',
-      'price': '\$30.00',
-      'imageUrl': 'https://picsum.photos/400?2',
-      'description': 'Short description for product 2.',
-      'category': 'Shirt',
-    },
-    {
-      'name': 'Product 5',
-      'price': '\$30.00',
-      'imageUrl': 'https://picsum.photos/400?2',
-      'description': 'Short description for product 2.',
-      'category': 'Shirt',
-    },
-    {
-      'name': 'Product 6',
-      'price': '\$30.00',
-      'imageUrl': 'https://picsum.photos/400?2',
-      'description': 'Short description for product 2.',
-      'category': 'Shirt',
-    },
-    // ... Ajoute d’autres produits
-  ];
+  // List to store products from API
+  List<ProduitVendeur> _products = [];
 
-  List<Map<String, String>> get filteredProducts {
+  List<ProduitVendeur> get filteredProducts {
     if (_searchQuery.isEmpty) {
-      return allProducts;
+      return _products;
     }
-    return allProducts
+    return _products
         .where(
-          (product) => product['name']!.toLowerCase().contains(
+          (product) => product.nom.toLowerCase().contains(
                 _searchQuery.toLowerCase(),
               ),
         )
@@ -89,6 +49,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _fetchProducts();
   }
 
   @override
@@ -96,6 +57,39 @@ class _HomePageState extends State<HomePage> {
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  // Fetch products from the API
+  Future<void> _fetchProducts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      print("Fetching products from API...");
+      final products = await _apiService.getVendorProducts();
+      print("Fetched ${products.length} products from API");
+
+      if (products.isEmpty) {
+        print("WARNING: No products found in the API response!");
+      } else {
+        // Print first product details for debugging
+        print("First product: ${products.first.nom}, ID: ${products.first.id}");
+      }
+
+      setState(() {
+        _products = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("ERROR fetching products: ${e.toString()}");
+      setState(() {
+        _errorMessage =
+            'Erreur lors du chargement des produits: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
   }
 
   void _onSearchChanged() {
@@ -209,68 +203,67 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: GridView.builder(
-                itemCount: filteredProducts.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8.0,
-                  crossAxisSpacing: 8.0,
-                  childAspectRatio: 0.7,
-                ),
-                itemBuilder: (context, index) {
-                  final product = filteredProducts[index];
-                  return GestureDetector(
-                    onTap: () {
-                      // On navigue vers la page de détails en passant le product
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            // Extraction des informations du produit
-                            final imageUrl = product['imageUrl'] ??
-                                'https://via.placeholder.com/400';
-                            final category =
-                                product['category'] ?? 'Unknown Category';
-                            final articleName =
-                                product['name'] ?? 'Unknown Product';
-                            final price = double.tryParse(
-                                  product['price']?.replaceAll(
-                                        RegExp(r'[^0-9.]'),
-                                        '',
-                                      ) ??
-                                      '0',
-                                ) ??
-                                0.0;
-                            final description = product['description'] ??
-                                'No description provided.';
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(child: Text(_errorMessage!))
+                      : GridView.builder(
+                          itemCount: filteredProducts.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8.0,
+                            crossAxisSpacing: 8.0,
+                            childAspectRatio: 0.7,
+                          ),
+                          itemBuilder: (context, index) {
+                            final produitVendeur = filteredProducts[index];
+                            // Convert ProduitVendeur to Product
+                            final product = ProductAdapter.fromProduitVendeur(
+                                produitVendeur);
 
-                            return DetailsArticlePage(
-                              imageUrl: imageUrl,
-                              detailsWidget: DetailsArticle(
-                                id: index.toString(),
-                                category: category,
-                                articleName: articleName,
-                                price: price,
-                                description: description,
-                                imageUrl: imageUrl,
-                                onAddToCart: () {
-                                  print('Article ajouté au panier');
-                                },
+                            return GestureDetector(
+                              onTap: () {
+                                // On navigue vers la page de détails en passant le product
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      // Extraction des informations du produit
+                                      final imageUrl =
+                                          produitVendeur.imageUrl ??
+                                              'https://via.placeholder.com/400';
+
+                                      final articleName = produitVendeur.nom ??
+                                          'Unknown Product';
+                                      final price = produitVendeur.prix ?? 0.0;
+                                      final description =
+                                          produitVendeur.description ??
+                                              'No description provided.';
+
+                                      return DetailsArticlePage(
+                                        imageUrl: imageUrl,
+                                        detailsWidget: DetailsArticle(
+                                          id: produitVendeur.id.toString(),
+                                          articleName: articleName,
+                                          price: price,
+                                          description: description,
+                                          imageUrl: imageUrl,
+                                          onAddToCart: () {
+                                            print('Article ajouté au panier');
+                                          },
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                              child: ProductCard(
+                                product: product,
                               ),
                             );
                           },
                         ),
-                      );
-                    },
-                    child: ProductCard(
-                      id: index.toString(),
-                      name: product["name"] ?? 'Unknown',
-                      price: product["price"] ?? 'N/A',
-                      imageUrl: product["imageUrl"] ?? '',
-                    ),
-                  );
-                },
-              ),
             ),
           ),
         ],

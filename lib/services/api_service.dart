@@ -225,15 +225,25 @@ class ApiService {
       if (response.statusCode == 200) {
         final List<dynamic> responseData = json.decode(response.body);
         final userData = await getUserData();
-        final vendorId = userData?['id'];
-
-        // Filter products by vendor_id if we're a vendor
         final userType = userData?['user_type'];
-        final List<dynamic> filteredProducts = userType == 'admin'
-            ? responseData
-            : responseData
-                .where((product) => product['vendor_id'] == vendorId)
-                .toList();
+
+        print('Received ${responseData.length} products from server');
+        print('User type: $userType');
+
+        // For customers or admin, show all products
+        // For vendors, only show their own products
+        List<dynamic> filteredProducts;
+        if (userType == 'vendor') {
+          final vendorId = userData?['id'];
+          filteredProducts = responseData
+              .where((product) => product['vendor_id'] == vendorId)
+              .toList();
+          print(
+              'Filtered to ${filteredProducts.length} products for vendor $vendorId');
+        } else {
+          // For customers and admins, show all products
+          filteredProducts = responseData;
+        }
 
         return filteredProducts
             .map((product) => ProduitVendeur.fromJson(product))
@@ -322,6 +332,9 @@ class ApiService {
       request.fields['description'] = produit.description ?? '';
       request.fields['price'] = produit.prix.toString();
       request.fields['stock'] = produit.quantite.toString();
+      if (produit.barcode != null && produit.barcode!.isNotEmpty) {
+        request.fields['barcode'] = produit.barcode!;
+      }
 
       // Add image if provided
       if (imageFile != null) {
@@ -424,9 +437,10 @@ class ApiService {
       request.fields['description'] = produit.description ?? '';
       request.fields['price'] = produit.prix.toString();
       request.fields['stock'] = produit.quantite.toString();
-
-      // Add field to delete existing image if requested - match field name with FastAPI
       request.fields['delete_image'] = deleteImage.toString();
+      if (produit.barcode != null && produit.barcode!.isNotEmpty) {
+        request.fields['barcode'] = produit.barcode!;
+      }
 
       // Add new image if provided
       if (imageFile != null) {

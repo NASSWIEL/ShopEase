@@ -38,6 +38,8 @@ migrate_working_dir/
 **/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
+**/android/**/*.keystore
+**/android/key.properties
 
 # iOS/XCode related
 **/ios/**/*.mode1v3
@@ -64,6 +66,8 @@ migrate_working_dir/
 **/ios/Flutter/flutter_assets/
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/Flutter/ephemeral
+**/ios/Flutter/Flutter.podspec
 
 # Web related
 lib/generated_plugin_registrant.dart
@@ -73,6 +77,18 @@ app.*.symbols
 
 # Obfuscation related
 app.*.map.json
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+lib/firebase_options.dart
+.firebase/
+firebase.json
+firestore.rules
+firestore.indexes.json
+.firebaserc
+ShopEaseConfFirebase.json
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3

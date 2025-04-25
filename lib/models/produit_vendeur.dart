@@ -1,60 +1,135 @@
 import 'package:untitled/config/network_config.dart';
 
 class ProduitVendeur {
-  final String id;
+  final String? id; // Keep as int? for internal usage
+  final String? idString; // Added string representation for API calls
   final String nom;
-  final int quantite;
-  final double prix;
-  final String? barcode;
   final String? description;
-  final String? imageUrl; // Store the raw image URL as received from API
+  final double prix;
+  final int quantite;
+  final String? barcode;
+  String? imageUrl;
+  final int? vendorId;
+
+  var fullImageUrl;
 
   ProduitVendeur({
-    required this.id,
+    this.id,
+    this.idString,
     required this.nom,
-    required this.quantite,
-    required this.prix,
-    this.barcode,
     this.description,
+    required this.prix,
+    required this.quantite,
+    this.barcode,
     this.imageUrl,
+    this.vendorId,
   });
 
-  // Factory constructor to create a ProduitVendeur from JSON data
+  // Factory constructor to create a product from JSON
   factory ProduitVendeur.fromJson(Map<String, dynamic> json) {
+    // Print the raw JSON for debugging
+    print('Processing product JSON: $json');
+
+    // Handle image URL - normalize to absolute URL if relative
+    String? imageUrl = json['image_url'] ?? json['image'];
+    if (imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        !imageUrl.startsWith('http')) {
+      imageUrl = '${NetworkConfig.baseApiUrl}$imageUrl';
+      print('Normalized image URL: $imageUrl');
+    }
+
+    // Handle different ID formats (string or int)
+    String? id;
+    String? idString;
+
+    if (json['id'] != null) {
+      if (json['id'] is String) {
+        idString = json['id'];
+        id = json['id'] is String ? json['id'] : null;
+      } else if (json['id'] is int) {
+        id = json['id'];
+        idString = id.toString();
+      }
+    }
+
+    // Handle different price formats (string or double or int)
+    double price = 0.0;
+    if (json['price'] != null) {
+      if (json['price'] is String) {
+        price = double.tryParse(json['price']) ?? 0.0;
+      } else if (json['price'] is int) {
+        price = (json['price'] as int).toDouble();
+      } else if (json['price'] is double) {
+        price = json['price'];
+      }
+    }
+
+    // Handle different quantity formats (string or int)
+    int quantity = 0;
+    if (json['stock'] != null) {
+      quantity = json['stock'] is String
+          ? int.tryParse(json['stock']) ?? 0
+          : json['stock'] as int;
+    }
+
+    // Handle vendor_id
+    int? vendorId;
+    if (json['vendor_id'] != null) {
+      vendorId = json['vendor_id'] is String
+          ? int.tryParse(json['vendor_id'])
+          : json['vendor_id'] as int?;
+    }
+
     return ProduitVendeur(
-      id: json['id'] ?? '',
-      nom: json['name'] ?? '',
-      quantite: json['stock'] ?? 0,
-      prix: (json['price'] ?? 0.0).toDouble(),
-      barcode: json['barcode'],
+      id: id,
+      idString: idString,
+      // Handle different field names for name/nom
+      nom: json['name'] ?? json['nom'] ?? 'Unnamed Product',
       description: json['description'],
-      imageUrl: json['image_url'],
+      prix: price,
+      quantite: quantity,
+      barcode: json['barcode'],
+      imageUrl: imageUrl,
+      vendorId: vendorId,
     );
   }
 
-  // Get the full image URL that can be used by Image.network()
-  String? get fullImageUrl {
-    return imageUrl != null ? NetworkConfig.getImageUrl(imageUrl) : null;
+  // Convert product to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': idString ?? id?.toString(),
+      'name': nom,
+      'description': description ?? '',
+      'price': prix,
+      'stock': quantite,
+      'barcode': barcode ?? '',
+      'image_url': imageUrl ?? '',
+      'vendor_id': vendorId,
+    };
   }
 
-  // Create a copy of this product with modified properties
+  // Add copyWith method to create a copy with modified fields
   ProduitVendeur copyWith({
-    String? id,
+    String? idString,
     String? nom,
-    int? quantite,
-    double? prix,
-    String? barcode,
     String? description,
+    double? prix,
+    int? quantite,
+    String? barcode,
     String? imageUrl,
+    int? vendorId,
   }) {
     return ProduitVendeur(
-      id: id ?? this.id,
+      id: this.id,
+      idString: idString ?? this.idString,
       nom: nom ?? this.nom,
-      quantite: quantite ?? this.quantite,
-      prix: prix ?? this.prix,
-      barcode: barcode ?? this.barcode,
       description: description ?? this.description,
+      prix: prix ?? this.prix,
+      quantite: quantite ?? this.quantite,
+      barcode: barcode ?? this.barcode,
       imageUrl: imageUrl ?? this.imageUrl,
+      vendorId: vendorId ?? this.vendorId,
     );
   }
 }
