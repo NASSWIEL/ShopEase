@@ -1,4 +1,4 @@
-name: untitled
+name: shopease
 description: "A new Flutter project."
 publish_to: "none"
 
@@ -26,6 +26,9 @@ dependencies:
   camera: ^0.10.5+9
   cupertino_icons: ^1.0.6
   dio: ^5.8.0+1
+  speech_to_text: ^7.0.0
+  permission_handler: ^11.4.0
+  mobile_scanner: ^6.0.10
 
 dev_dependencies:
   flutter_test:

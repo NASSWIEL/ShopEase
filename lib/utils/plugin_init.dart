@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Initializes plugins that require platform-specific initialization
 class PluginInitializer {
@@ -18,6 +19,9 @@ class PluginInitializer {
       } catch (e) {
         print('Failed to initialize Geolocator for web: $e');
       }
+    } else {
+      // Request camera permission for barcode scanner
+      await Permission.camera.request();
     }
 
     // Platform-specific initialization if needed

@@ -6,7 +6,7 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:untitled/screens/payment_page.dart';
+import 'package:shopease/screens/payment_page.dart';
 
 class LivraisonAdressePage extends StatefulWidget {
   final double cartTotal;

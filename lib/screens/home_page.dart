@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled/screens/login_page.dart';
-import 'package:untitled/services/api_service.dart';
-import 'package:untitled/models/produit_vendeur.dart';
-import 'package:untitled/models/product_adapter.dart'; // Import our new adapter
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:shopease/screens/login_page.dart';
+import 'package:shopease/services/api_service.dart';
+import 'package:shopease/models/produit_vendeur.dart';
+import 'package:shopease/models/product_adapter.dart';
+import 'package:shopease/utils/permissions_handler.dart';
 
-import 'package:untitled/widgets/product_card.dart';
-import 'package:untitled/screens/panier_page.dart';
-import 'package:untitled/screens/details_article_page.dart';
-import 'package:untitled/widgets/details_article.dart';
-import 'package:untitled/widgets/profile_logout_widget.dart';
+import 'package:shopease/widgets/product_card.dart';
+import 'package:shopease/screens/panier_page.dart';
+import 'package:shopease/screens/details_article_page.dart';
+import 'package:shopease/widgets/details_article.dart';
+import 'package:shopease/widgets/profile_logout_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -29,14 +32,24 @@ class _HomePageState extends State<HomePage> {
   String? _errorMessage;
   final ApiService _apiService = ApiService();
 
+  // Speech to text
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
+
   // List to store products from API
   List<ProduitVendeur> _products = [];
 
   List<ProduitVendeur> get filteredProducts {
+    // First filter out products with zero stock
+    final inStockProducts =
+        _products.where((product) => product.quantite > 0).toList();
+
+    // Then apply search filter if needed
     if (_searchQuery.isEmpty) {
-      return _products;
+      return inStockProducts;
     }
-    return _products
+    return inStockProducts
         .where(
           (product) => product.nom.toLowerCase().contains(
                 _searchQuery.toLowerCase(),
@@ -50,12 +63,69 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _searchController.addListener(_onSearchChanged);
     _fetchProducts();
+    _initSpeech();
+  }
+
+  // This initializes SpeechToText
+  Future<void> _initSpeech() async {
+    try {
+      print("Starting speech recognition initialization...");
+      _speechEnabled = await _speechToText.initialize(
+        onStatus: (status) {
+          print('Speech recognition status change: $status');
+          // Update UI state when status changes (like when recognition starts/stops)
+          if (status == 'listening') {
+            setState(() {
+              _isListening = true;
+            });
+          } else if (status == 'notListening' || status == 'done') {
+            setState(() {
+              _isListening = false;
+            });
+          }
+        },
+        onError: (errorNotification) {
+          print('Speech recognition error: $errorNotification');
+          // Show error message to user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Recognition error: $errorNotification')),
+          );
+          setState(() {
+            _isListening = false;
+          });
+        },
+        debugLogging: true,
+      );
+      print("Speech initialized successfully: $_speechEnabled");
+
+      if (_speechEnabled) {
+        // Check what languages are available
+        try {
+          final languages = await _speechToText.locales();
+          print("Available languages: ${languages.length}");
+          for (var lang in languages.take(5)) {
+            // Print just the first 5 to avoid flooding logs
+            print("Language: ${lang.localeId} - ${lang.name}");
+          }
+        } catch (e) {
+          print("Error getting languages: $e");
+        }
+      }
+
+      setState(() {});
+    } catch (e) {
+      print("Speech initialization error: $e");
+      setState(() {
+        _speechEnabled = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _debounce?.cancel();
+    _speechToText.cancel();
     super.dispose();
   }
 
@@ -101,30 +171,93 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // This starts listening for speech
   Future<void> _startListening() async {
-    setState(() {
-      _isListening = true;
-    });
-
     try {
-      // Simulation de l'appel à une API de reconnaissance vocale
-      await Future.delayed(const Duration(seconds: 2));
-      final String transcribedText =
-          "example product"; // Exemple de transcription
+      // Request microphone permission
+      final bool hasPermission =
+          await PermissionsHandler.requestMicrophonePermission(context);
+      if (!hasPermission) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone permission denied')),
+        );
+        return;
+      }
+
+      // Check if speech is initialized, if not try to initialize again
+      if (!_speechEnabled) {
+        await _initSpeech();
+        if (!_speechEnabled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Speech recognition not available')),
+          );
+          return;
+        }
+      }
+
+      // Get available languages
+      try {
+        var locales = await _speechToText.locales();
+        print(
+            "Available locales: ${locales.map((e) => '${e.localeId}').join(', ')}");
+      } catch (e) {
+        print("Error getting locales: $e");
+      }
+
+      // Start listening to user input - remove the localeId to use device default language
+      await _speechToText.listen(
+        onResult: _onSpeechResult,
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      );
 
       setState(() {
-        _searchController.text = transcribedText;
-        _searchQuery = transcribedText;
+        _isListening = true;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Speech recognition failed: $e')));
-    } finally {
+      print("Error starting speech recognition: $e");
       setState(() {
         _isListening = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to start speech recognition: $e')),
+      );
     }
+  }
+
+  // This stops listening for speech
+  void _stopListening() {
+    try {
+      _speechToText.stop();
+      setState(() {
+        _isListening = false;
+      });
+    } catch (e) {
+      print("Error stopping speech recognition: $e");
+    }
+  }
+
+  // This is called each time speech is detected
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    print("Speech result received: ${result.recognizedWords}");
+
+    if (result.finalResult) {
+      print("FINAL speech result: ${result.recognizedWords}");
+    }
+
+    // Update UI on main thread to ensure it gets applied
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _lastWords = result.recognizedWords;
+          _searchController.text = result.recognizedWords;
+          _searchQuery = result.recognizedWords;
+        });
+      }
+    });
   }
 
   @override
@@ -191,7 +324,13 @@ class _HomePageState extends State<HomePage> {
                         color:
                             _isListening ? Colors.red : const Color(0xFF5D9C88),
                       ),
-                      onPressed: _startListening,
+                      onPressed: () {
+                        if (_isListening) {
+                          _stopListening();
+                        } else {
+                          _startListening();
+                        }
+                      },
                     ),
                   ],
                 ),

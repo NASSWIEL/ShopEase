@@ -1,101 +1,41 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-/// A simplified barcode scanner service that uses simulation
-/// to avoid native plugin issues
 class BarcodeScannerService {
-  /// Simulates a barcode scan with common product codes
-  static Future<String> scanBarcode(BuildContext context) async {
-    // Show a dialog with barcode options for simulation
-    return simulateScan(context);
-  }
+  // Mock function to get product info from barcode
+  static Future<Map<String, dynamic>?> getProductInfo(String barcode) async {
+    // You could implement a real API call here
+    try {
+      // For demonstration, this is a mock API call
+      // In a real app, you'd call a product database API
 
-  /// Simulates a barcode scan with predefined options
-  static Future<String> simulateScan(BuildContext context) async {
-    final List<Map<String, String>> demoProducts = [
-      {'barcode': '123456789', 'name': 'Nike Air Max'},
-      {'barcode': '987654321', 'name': 'Adidas Ultraboost'},
-      {'barcode': '456789123', 'name': 'Puma Running Shoes'},
-    ];
+      // Simulating network delay
+      await Future.delayed(const Duration(seconds: 1));
 
-    final result = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: const Text('Simulation de scan de code-barres'),
-          children: [
-            ...demoProducts.map((product) {
-              return SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, product['barcode']);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.barcode_reader),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(product['name']!,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            Text('Code: ${product['barcode']}'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, '-1');
-              },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.cancel, color: Colors.red),
-                    SizedBox(width: 10),
-                    Text('Annuler', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    return result ?? '-1';
-  }
-
-  /// Gets product information based on barcode
-  static Map<String, String>? getProductInfo(String barcode) {
-    // Sample product database
-    final Map<String, Map<String, String>> productDatabase = {
-      '123456789': {
-        'name': 'Nike Air Max',
-        'price': '129.99',
-        'description':
-            'Chaussures de sport avec une excellente absorption des chocs.'
-      },
-      '987654321': {
-        'name': 'Adidas Ultraboost',
-        'price': '159.99',
-        'description':
-            'Chaussures de course confortables avec technologie Boost.'
-      },
-      '456789123': {
-        'name': 'Puma Running Shoes',
-        'price': '89.99',
-        'description': 'Chaussures légères pour la course quotidienne.'
+      // Return mock data based on barcode
+      // In a real app, this would come from an API
+      if (barcode == "123456789") {
+        return {
+          'name': 'Product Example',
+          'price': 9.99,
+          'description': 'This is a sample product',
+          'barcode': barcode,
+        };
+      } else {
+        // For all other barcodes, return null to indicate no product found
+        return null;
       }
-    };
 
-    return productDatabase[barcode];
+      // Example of how to implement a real API call:
+      // final response = await http.get(Uri.parse('https://api.example.com/products/$barcode'));
+      // if (response.statusCode == 200) {
+      //   return jsonDecode(response.body);
+      // } else {
+      //   return null;
+      // }
+    } catch (e) {
+      print('Error getting product info: $e');
+      return null;
+    }
   }
 }

@@ -1,14 +1,17 @@
 // lib/screens/gestion_article_vendeur_page.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../services/barcode_scanner_service.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../widgets/article_ajoute_vendeur.dart';
 import 'ajouter_article_vendeur_page.dart';
 import 'editer_article_vendeur_page.dart';
+import 'barcode_scanner_page.dart'; // Import the barcode scanner page
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/produit_vendeur.dart';
 import '../services/api_service.dart'; // Import API service
-import 'package:untitled/widgets/profile_logout_widget.dart'; // Import the profile widget
+import 'package:shopease/widgets/profile_logout_widget.dart'; // Import the profile widget
 
 class GestionArticleVendeurPage extends StatefulWidget {
   const GestionArticleVendeurPage({Key? key}) : super(key: key);
@@ -112,25 +115,25 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
                         color: Colors.black87),
                     textAlign: TextAlign.center),
                 const SizedBox(height: 30),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.of(dialogContext)
-                        .pop(true); // Return true to indicate barcode
+                    Navigator.of(dialogContext).pop(true);
                   },
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  label: const Text('Avec un code',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[800],
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0)),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 35, vertical: 14)),
-                  child: const Text('Avec un code-barres'),
+                          horizontal: 20, vertical: 14)),
                 ),
                 const SizedBox(height: 15),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.of(dialogContext)
-                        .pop(false); // Return false to indicate no barcode
+                    Navigator.of(dialogContext).pop(false);
                   },
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[800],
@@ -139,7 +142,7 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
                           borderRadius: BorderRadius.circular(15.0)),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 35, vertical: 14)),
-                  child: const Text('Sans code-barres'),
+                  child: const Text('Sans code'),
                 ),
               ],
             ),
@@ -152,13 +155,13 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
     if (result != null && mounted) {
       String? barcode;
 
-      // If user chose to add with barcode, scan it first
+      // If user chose to add with code, get it via manual input
       if (result == true) {
-        barcode = await _scanBarcode();
+        barcode = await _inputBarcode();
         if (barcode == '-1') {
-          // User canceled scan
+          // User canceled input
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Scan annulé')),
+            const SnackBar(content: Text('Saisie de code annulée')),
           );
           return;
         }
@@ -185,9 +188,72 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
     }
   }
 
-  Future<String> _scanBarcode() async {
-    // Use our simplified service which doesn't rely on native plugins
-    return await BarcodeScannerService.scanBarcode(context);
+  Future<String> _inputBarcode() async {
+    try {
+      // Utiliser le scanner de code-barres de la bibliothèque mobile_scanner
+      String? result = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => BarcodeScannerPage()),
+      );
+
+      // Si le résultat est null ou vide, considérez-le comme annulé
+      if (result == null || result.isEmpty || result == '-1') {
+        return '-1';
+      }
+
+      print('Code-barres scanné: $result');
+      return result;
+    } catch (e) {
+      print('Erreur lors du scan du code-barres: $e');
+      // En cas d'erreur, revenir à la saisie manuelle
+      return _manualCodeInput();
+    }
+  }
+
+  // Méthode de secours pour la saisie manuelle du code
+  Future<String> _manualCodeInput() async {
+    final TextEditingController codeController = TextEditingController();
+    final Completer<String> completer = Completer<String>();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Saisir un code manuellement'),
+          content: TextField(
+            controller: codeController,
+            decoration: const InputDecoration(
+              hintText: "Entrez le code du produit",
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.text,
+            autofocus: true,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annuler'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                completer.complete('-1');
+              },
+            ),
+            TextButton(
+              child: const Text('Confirmer'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (codeController.text.trim().isEmpty) {
+                  completer.complete('-1');
+                } else {
+                  completer.complete(codeController.text.trim());
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    return completer.future;
   }
 
   void _navigateToEditPage(ProduitVendeur produitToEdit) async {
@@ -446,11 +512,9 @@ class _GestionArticleVendeurPageState extends State<GestionArticleVendeurPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5D9C88),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
-                  elevation: 5,
+                      borderRadius: BorderRadius.circular(15.0)),
                 ),
               ),
               const SizedBox(height: 20),

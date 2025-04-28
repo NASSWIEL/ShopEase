@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:untitled/screens/gestion_article_vendeur_page.dart';
-import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/screens/inscription_page.dart';
+import 'package:shopease/screens/gestion_article_vendeur_page.dart';
+import 'package:shopease/screens/home_page.dart';
+import 'package:shopease/screens/inscription_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConnexionPage extends StatefulWidget {

@@ -9,12 +9,17 @@ ShopEase is a mobile application built with Flutter that uses a FastAPI backend.
 ```
 ShopEase/
 ├── lib/                      # Flutter app code
-│   └── services/
-│       └── api_service.dart # Service to connect Flutter with FastAPI backend
+│   ├── screens/              # Flutter UI screens
+│   ├── models/               # Data models
+│   ├── providers/            # State management
+│   ├── services/             # Services including API service
+│   │   └── api_service.dart  # Service to connect Flutter with FastAPI backend
+│   └── utils/                # Utility functions
+│       └── server_config_util.dart # Server configuration utilities
 ├── backend/                  # FastAPI backend code
 │   ├── main.py              # Main FastAPI application
-│   ├── firebase_admin_config.py # Firebase Admin SDK configuration
-│   └── requirements.txt     # Python dependencies
+│   ├── requirements.txt     # Python dependencies
+│   └── .env                 # Environment variables (create this)
 ├── serviceAccountKey.json    # Firebase service account credentials (you need to create this)
 └── README.md                # This file
 ```
@@ -34,7 +39,15 @@ ShopEase/
     - Go to Project Settings > General
     - Find the Web API Key under "Your apps" or "SDK setup and configuration".
 
-### 2. Backend Setup
+### 2. Cloudinary Setup
+
+1. Create a Cloudinary account at [Cloudinary](https://cloudinary.com/)
+2. Get your Cloudinary credentials:
+   - Cloud Name
+   - API Key
+   - API Secret
+
+### 3. Backend Setup
 
 1.  Install Python dependencies:
 
@@ -48,6 +61,9 @@ ShopEase/
     ```
     FIREBASE_CREDENTIALS_PATH=../serviceAccountKey.json
     FIREBASE_WEB_API_KEY=YOUR_FIREBASE_WEB_API_KEY # Add your key here
+    CLOUDINARY_CLOUD_NAME=YOUR_CLOUDINARY_CLOUD_NAME
+    CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY
+    CLOUDINARY_API_SECRET=YOUR_CLOUDINARY_API_SECRET
     ```
 
 3.  Start the FastAPI server:
@@ -56,18 +72,16 @@ ShopEase/
     uvicorn main:app --reload
     ```
 
-### 3. Flutter App Setup
+### 4. Flutter App Setup
 
 1.  Install app dependencies:
 
     ```bash
-    # Ensure you have dio and shared_preferences
-    flutter pub add dio shared_preferences
-    # Remove firebase_core and firebase_auth if previously added
-    # flutter pub remove firebase_core firebase_auth
+    # Ensure you have required dependencies
+    flutter pub add dio shared_preferences provider
     ```
 
-2.  Update your Flutter app's `main.dart` to remove any `Firebase.initializeApp()` calls if present.
+2.  Configure the server address in the Flutter app if needed using the server configuration utilities.
 
 ## API Endpoints
 
@@ -106,3 +120,7 @@ Once the server is running, you can access the interactive API documentation:
 ## Note on Firebase Integration
 
 This setup uses the Firebase Admin SDK on the backend (FastAPI) to interact with Firebase services (Auth, Firestore). The Flutter frontend communicates _only_ with the FastAPI backend. When a user registers or logs in via the FastAPI endpoints, the backend handles the interaction with Firebase Auth. For login, the backend verifies credentials using the Firebase Auth REST API and returns a Firebase ID Token to the Flutter app. This token is then sent by the Flutter app in the `Authorization: Bearer <token>` header for subsequent requests to protected backend endpoints. The backend verifies this token using the Firebase Admin SDK.
+
+## Image Storage
+
+The application uses Cloudinary for storing product images. When vendors upload product images, they are stored in Cloudinary and the URL is saved in the Firestore database.

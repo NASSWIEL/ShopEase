@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/providers/auth_provider.dart';
-import 'package:untitled/screens/login_page.dart';
+import 'package:shopease/providers/auth_provider.dart';
+import 'package:shopease/screens/login_page.dart';
 
 class ProfileLogoutWidget extends StatelessWidget {
   const ProfileLogoutWidget({Key? key}) : super(key: key);

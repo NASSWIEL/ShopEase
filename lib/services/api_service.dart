@@ -6,8 +6,8 @@ import 'package:http/io_client.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled/config/network_config.dart';
-import 'package:untitled/models/produit_vendeur.dart';
+import 'package:shopease/config/network_config.dart';
+import 'package:shopease/models/produit_vendeur.dart';
 
 class ApiService {
   // URL courante utilisée pour les requêtes API
@@ -20,18 +20,19 @@ class ApiService {
 
   // Create a custom HTTP client that bypasses certificate verification if configured
   http.Client _createCustomClient() {
+    // Create a custom HTTP client with extended timeout for mobile devices
+    HttpClient httpClient = HttpClient()
+      ..connectionTimeout =
+          Duration(seconds: NetworkConfig.connectionTimeout * 2)
+      ..idleTimeout = Duration(seconds: 30); // Add idle timeout
+
     // Only bypass security in development with explicit permission
     if (NetworkConfig.allowInsecureConnections) {
-      HttpClient httpClient = HttpClient()
-        ..badCertificateCallback =
-            ((X509Certificate cert, String host, int port) => true)
-        ..connectionTimeout =
-            Duration(seconds: NetworkConfig.connectionTimeout);
-      return IOClient(httpClient);
-    } else {
-      // Use standard client with security for production
-      return http.Client();
+      httpClient.badCertificateCallback =
+          ((X509Certificate cert, String host, int port) => true);
     }
+
+    return IOClient(httpClient);
   }
 
   // Try request with fallback URLs if the main one fails
@@ -40,15 +41,50 @@ class ApiService {
   }) async {
     try {
       // Try with current URL first
+      print('Attempting connection to: $_currentBaseUrl');
       return await requestFn(_currentBaseUrl);
+    } on HandshakeException catch (e) {
+      print('SSL/TLS Handshake failed: ${e.toString()}');
+
+      // Check if we're using HTTPS and consider switching to HTTP for test/dev environments
+      if (_currentBaseUrl.startsWith('https://')) {
+        final httpUrl = _currentBaseUrl.replaceFirst('https://', 'http://');
+        print('Trying with HTTP instead: $httpUrl');
+
+        try {
+          return await requestFn(httpUrl);
+        } catch (innerError) {
+          print('HTTP fallback also failed: $innerError');
+          // Continue to fallback URLs or throw
+        }
+      }
+
+      // If HTTP fallback failed or wasn't attempted, try other fallback URLs
+      _failureCount++;
+      if (_failureCount <= NetworkConfig.fallbackUrls.length) {
+        _currentBaseUrl = NetworkConfig.fallbackUrls[_failureCount - 1];
+        print('Trying fallback URL: $_currentBaseUrl');
+        await Future.delayed(Duration(milliseconds: 500));
+        return await requestFn(_currentBaseUrl);
+      } else {
+        _failureCount = 0;
+        _currentBaseUrl = NetworkConfig.baseApiUrl;
+        throw Exception(
+            'Erreur de connexion sécurisée. Le serveur ne supporte pas HTTPS correctement ou ' +
+                'le certificat n\'est pas valide. Essayez avec HTTP si c\'est un environnement de test.');
+      }
     } on SocketException catch (e) {
       // Connection error, try fallback URLs if available
       _failureCount++;
+      print('Connection failed to $_currentBaseUrl: ${e.message}');
 
       if (_failureCount <= NetworkConfig.fallbackUrls.length) {
         // Try next URL in the fallback list
         _currentBaseUrl = NetworkConfig.fallbackUrls[_failureCount - 1];
-        print('Connection failed, trying fallback URL: $_currentBaseUrl');
+        print('Trying fallback URL: $_currentBaseUrl');
+
+        // Add small delay before retry to avoid overwhelming the network
+        await Future.delayed(Duration(milliseconds: 500));
         return await requestFn(_currentBaseUrl);
       } else {
         // All URLs failed
@@ -63,6 +99,7 @@ class ApiService {
       }
     } catch (e) {
       // Other errors, just rethrow
+      print('Unexpected error during request: ${e.toString()}');
       rethrow;
     }
   }

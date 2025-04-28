@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/models/product.dart';
-import 'package:untitled/screens/product_detail_page.dart';
+import 'package:shopease/models/product.dart';
+import 'package:shopease/screens/product_detail_page.dart';
 import '../models/cart.dart';
 
 class ProductCard extends StatefulWidget {

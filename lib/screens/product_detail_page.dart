@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/models/product.dart';
+import 'package:shopease/models/product.dart';
 import '../models/cart.dart';
 
 class ProductDetailPage extends StatelessWidget {

@@ -1,5 +1,6 @@
-import 'package:untitled/models/product.dart';
-import 'package:untitled/models/produit_vendeur.dart';
+
+import 'package:shopease/models/product.dart';
+import 'package:shopease/models/produit_vendeur.dart';
 
 /// Helper class to convert between different product models
 class ProductAdapter {

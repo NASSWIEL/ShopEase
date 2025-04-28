@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:untitled/config/network_config.dart';
-import 'package:untitled/services/api_service.dart';
+import 'package:shopease/config/network_config.dart';
+import 'package:shopease/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'dart:io';

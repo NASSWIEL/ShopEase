@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/screens/livraison_adresse_page.dart';
+import 'package:shopease/screens/livraison_adresse_page.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/models/cart.dart';
-import 'package:untitled/models/cart_item.dart';
+import 'package:shopease/models/cart.dart';
+import 'package:shopease/models/cart_item.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({Key? key}) : super(key: key);

@@ -11,6 +11,7 @@ import 'dart:typed_data';
 import '../models/produit_vendeur.dart';
 import '../services/barcode_scanner_service.dart';
 import '../services/api_service.dart'; // Ajout du service API
+import 'barcode_scanner_page.dart';
 
 class AjouterArticleVendeurPage extends StatefulWidget {
   final String? initialBarcode;
@@ -75,13 +76,13 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
       // Add a small delay to simulate network request
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Get product info from our service
-      final productData = BarcodeScannerService.getProductInfo(barcode);
+      // Get product info from our service - make sure to await the Future
+      final productData = await BarcodeScannerService.getProductInfo(barcode);
 
       if (productData != null && mounted) {
         // Populate fields with the product data
         _nameController.text = productData['name'] ?? '';
-        _priceController.text = productData['price'] ?? '';
+        _priceController.text = productData['price']?.toString() ?? '';
         _descriptionController.text = productData['description'] ?? '';
 
         // Show success message
@@ -250,6 +251,32 @@ class _AjouterArticleVendeurPageState extends State<AjouterArticleVendeurPage> {
     return Icon(Icons.image_not_supported, color: Colors.grey[600], size: 40);
   }
   // --- End of Image Preview ---
+
+  // Replace the barcode scanning functionality with our implementation
+  Future<void> _scanBarcode() async {
+    try {
+      final String? barcode = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => BarcodeScannerPage()),
+      );
+
+      if (barcode != null && barcode != '-1' && mounted) {
+        setState(() {
+          _barcodeController.text = barcode;
+        });
+
+        // If a barcode was scanned, try to fetch product details
+        if (barcode.isNotEmpty) {
+          _fetchProductDetails(barcode);
+        }
+      }
+    } catch (e) {
+      print("Error scanning barcode: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du scan du code-barres: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/models/cart.dart';
-import 'package:untitled/models/cart_item.dart';
-import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/services/order_service.dart';
+import 'package:shopease/models/cart.dart';
+import 'package:shopease/models/cart_item.dart';
+import 'package:shopease/screens/home_page.dart';
+import 'package:shopease/services/order_service.dart';
 
 class PaymentPage extends StatefulWidget {
   final String deliveryAddress;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:untitled/screens/gestion_article_vendeur_page.dart';
-import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/services/api_service.dart'; // Import ApiService
+import 'package:shopease/screens/gestion_article_vendeur_page.dart';
+import 'package:shopease/screens/home_page.dart';
+import 'package:shopease/services/api_service.dart'; // Import ApiService
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({Key? key}) : super(key: key);

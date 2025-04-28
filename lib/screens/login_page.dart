@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:untitled/screens/gestion_article_vendeur_page.dart';
-import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/screens/inscription_page.dart';
-import 'package:untitled/services/api_service.dart';
+import 'package:shopease/screens/gestion_article_vendeur_page.dart';
+import 'package:shopease/screens/home_page.dart';
+import 'package:shopease/screens/inscription_page.dart';
+import 'package:shopease/services/api_service.dart';
+import 'package:shopease/utils/server_config_util.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -89,6 +90,20 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          // Server configuration button
+          IconButton(
+            icon: const Icon(Icons.settings, color: Color(0xFF5D9C88)),
+            onPressed: () {
+              ServerConfigUtil.showServerConfigDialog(context);
+            },
+            tooltip: 'Server Configuration',
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Container(

@@ -1,4 +1,4 @@
-import 'package:untitled/config/network_config.dart';
+import 'package:shopease/config/network_config.dart';
 
 class ProduitVendeur {
   final String? id; // Keep as int? for internal usage

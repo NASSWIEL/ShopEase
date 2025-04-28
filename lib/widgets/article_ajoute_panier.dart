@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:untitled/models/cart.dart';
-import 'package:untitled/models/cart_item.dart';
+import 'package:shopease/models/cart.dart';
+import 'package:shopease/models/cart_item.dart';
 
 class ArticleAjoutePanier extends StatelessWidget {
   final String productId;
@@ -9,6 +9,7 @@ class ArticleAjoutePanier extends StatelessWidget {
   final double price;
   final String? imageUrl;
   final int quantity;
+  final int? stockLimit;
 
   const ArticleAjoutePanier({
     super.key,
@@ -17,10 +18,17 @@ class ArticleAjoutePanier extends StatelessWidget {
     required this.price,
     this.imageUrl,
     required this.quantity,
+    this.stockLimit,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Update the cart provider with the stock limit information if available
+    if (stockLimit != null) {
+      final cart = Provider.of<Cart>(context, listen: false);
+      cart.setStockLimit(productId, stockLimit!);
+    }
+
     return Dismissible(
       key: ValueKey(productId),
       background: Container(
@@ -74,25 +82,28 @@ class ArticleAjoutePanier extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor,
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: FittedBox(
-                  child: Text('\$$price'),
-                ),
+            leading: SizedBox(
+              width: 50,
+              height: 50,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _buildImage(),
               ),
             ),
             title: Text(productName),
-            subtitle: Text('Total: \$${(price * quantity).toStringAsFixed(2)}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Prix: \$${price.toStringAsFixed(2)}'),
+                Text('Total: \$${(price * quantity).toStringAsFixed(2)}'),
+              ],
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(Icons.remove),
                   onPressed: () {
-                    // TODO: Implement "Buy Now" logic here.
-                    print('Buy now clicked');
                     Provider.of<Cart>(context, listen: false)
                         .decrementQuantity(productId);
                   },
@@ -101,8 +112,21 @@ class ArticleAjoutePanier extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
-                    Provider.of<Cart>(context, listen: false)
-                        .incrementQuantity(productId);
+                    final cart = Provider.of<Cart>(context, listen: false);
+                    final success = cart.incrementQuantity(productId);
+
+                    // Show message if couldn't increment due to stock limit
+                    if (!success && cart.getStockLimit(productId) != null) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Impossible d\'ajouter plus de cet article. Stock maximum: ${cart.getStockLimit(productId)}',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   },
                 ),
               ],
@@ -114,13 +138,14 @@ class ArticleAjoutePanier extends StatelessWidget {
   }
 
   // Factory constructor to create from a CartItem
-  factory ArticleAjoutePanier.fromCartItem(CartItem item) {
+  factory ArticleAjoutePanier.fromCartItem(CartItem item, {int? stockLimit}) {
     return ArticleAjoutePanier(
       productId: item.id,
       productName: item.title, // Use the title getter we added
       price: item.price,
       imageUrl: item.imageUrl,
       quantity: item.quantity,
+      stockLimit: stockLimit,
     );
   }
 
@@ -140,6 +165,15 @@ class ArticleAjoutePanier extends StatelessWidget {
       width: 80,
       height: 80,
       fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        print('Error loading image: $error for URL: $imageUrl');
+        return Container(
+          width: 80,
+          height: 80,
+          color: Colors.grey[300],
+          child: const Icon(Icons.broken_image, color: Colors.grey),
+        );
+      },
     );
   }
 

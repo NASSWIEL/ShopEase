@@ -29,7 +29,8 @@ class ArticleAjouteVendeur extends StatelessWidget {
       nom: produit.nom,
       quantite: produit.quantite,
       prix: produit.prix,
-      imageUrl: produit.fullImageUrl,
+      imageUrl:
+          produit.imageUrl, // Fixed: Using imageUrl instead of fullImageUrl
       description: produit.description,
       barcode: produit.barcode,
     );
@@ -37,6 +38,9 @@ class ArticleAjouteVendeur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pour le débogage
+    print('ArticleAjouteVendeur imageUrl: $imageUrl');
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),

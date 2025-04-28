@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'barcode_scanner_page.dart'; // Use our custom scanner page instead
 import '../models/produit_vendeur.dart';
 import '../services/api_service.dart'; // Import du service API
 
@@ -280,29 +281,54 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
                             const Text('Code-barre:',
                                 style: TextStyle(color: labelColor)),
                             const SizedBox(height: 5),
-                            TextFormField(
-                              controller: _barcodeController,
-                              style: const TextStyle(color: Colors.black87),
-                              decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: inputFillColor,
-                                  hintText: 'Entrez le code-barre (optionnel)',
-                                  hintStyle: TextStyle(color: Colors.grey[600]),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    borderSide:
-                                        BorderSide(color: Colors.grey[400]!),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _barcodeController,
+                                    style:
+                                        const TextStyle(color: Colors.black87),
+                                    decoration: InputDecoration(
+                                        filled: true,
+                                        fillColor: inputFillColor,
+                                        hintText:
+                                            'Entrez le code-barre (optionnel)',
+                                        hintStyle:
+                                            TextStyle(color: Colors.grey[600]),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12.0),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey[400]!),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12.0),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF5D9C88),
+                                              width: 1.5),
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12.0),
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 15, vertical: 12)),
                                   ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    borderSide: const BorderSide(
-                                        color: Color(0xFF5D9C88), width: 1.5),
+                                ),
+                                const SizedBox(width: 10),
+                                IconButton(
+                                  onPressed: _scanBarcode,
+                                  icon: const Icon(Icons.qr_code_scanner,
+                                      color: Colors.white),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: const Color(0xFF5D9C88),
+                                    padding: const EdgeInsets.all(12),
                                   ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 15, vertical: 12)),
+                                  tooltip: 'Scanner un code-barres',
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 15),
 
@@ -597,6 +623,28 @@ class _EditerArticleVendeurPageState extends State<EditerArticleVendeurPage> {
     } else {
       // No image or deleted image
       return Icon(Icons.image_not_supported, color: Colors.grey[600], size: 40);
+    }
+  }
+
+  // Méthode pour scanner un code-barres
+  Future<void> _scanBarcode() async {
+    try {
+      final String? barcode = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => BarcodeScannerPage()),
+      );
+
+      if (barcode != null && barcode != '-1' && mounted) {
+        setState(() {
+          _barcodeController.text = barcode;
+        });
+      }
+    } catch (e) {
+      print("Error scanning barcode: $e");
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du scan du code-barres: $e')),
+      );
     }
   }
 }

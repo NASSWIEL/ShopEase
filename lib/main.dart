@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
 
-import 'package:untitled/screens/gestion_article_vendeur_page.dart';
-import 'package:untitled/screens/inscription_page.dart';
-import 'package:untitled/screens/home_page.dart';
-import 'package:untitled/screens/livraison_adresse_page.dart';
-import 'package:untitled/screens/payment_page.dart';
-import 'package:untitled/screens/splash_screen.dart';
+// Update imports to use the correct package name
+import 'package:shopease/screens/gestion_article_vendeur_page.dart';
+import 'package:shopease/screens/inscription_page.dart';
+import 'package:shopease/screens/home_page.dart';
+import 'package:shopease/screens/livraison_adresse_page.dart';
+import 'package:shopease/screens/payment_page.dart';
+import 'package:shopease/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'models/cart.dart';
-import 'providers/auth_provider.dart'; // Import the auth provider
-import 'utils/plugin_init.dart'; // Import the plugin initializer
-import 'package:untitled/config/network_config.dart'; // Import network config
-import 'package:untitled/screens/login_page.dart';
+import 'providers/auth_provider.dart';
+import 'utils/plugin_init.dart';
+import 'package:shopease/config/network_config.dart';
+import 'package:shopease/utils/server_config_util.dart'; // Import server config utility
+import 'package:shopease/screens/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
 
   // Initialize plugins that need early initialization
   await PluginInitializer.initializePlugins();
+
+  // Load custom server IP if configured
+  final customIp = await ServerConfigUtil.getServerIp();
+  NetworkConfig.baseAssetUrl =
+      "https://shopease-gkoz.onrender.com"; // Removed trailing slash
+  print('Using server address: $customIp');
 
   // Configure network settings for emulator/device
   NetworkConfig.configureForCurrentDevice();
