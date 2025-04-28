@@ -1,5 +1,32 @@
 # ShopEase - Flutter App with FastAPI and Firebase Backend
 
+## About ShopEase
+
+ShopEase is a comprehensive e-commerce mobile application designed to provide a seamless shopping experience. Built with Flutter for the frontend and FastAPI for the backend, it offers a robust solution for both customers and vendors.
+
+### Key Features:
+
+- **User Authentication**: Secure login and registration system using Firebase Authentication
+- **Product Management**: Vendors can add, edit, and remove their products with image uploads via Cloudinary
+- **Shopping Cart**: Intuitive cart system for adding and managing product selections
+- **Order Processing**: Complete checkout flow including address selection and payment processing
+- **User Profiles**: Personalized user experiences with profile management
+- **Responsive UI**: Modern, clean interface designed for ease of use across different device sizes
+
+### Tech Stack:
+
+- **Frontend**: Flutter with Provider for state management
+- **Backend**: FastAPI (Python)
+- **Authentication & Database**: Firebase (Auth and Firestore)
+- **Image Storage**: Cloudinary
+- **API Communication**: RESTful endpoints with authentication tokens
+
+### Target Audience:
+
+- Consumers looking for a streamlined shopping experience
+- Vendors seeking a platform to showcase and sell their products
+- Developers interested in a modern full-stack e-commerce implementation
+
 ## Overview
 
 ShopEase is a mobile application built with Flutter that uses a FastAPI backend. The backend leverages Firebase for authentication and data storage, providing a RESTful API for the Flutter frontend. The Flutter app does not interact directly with Firebase.
@@ -78,7 +105,7 @@ ShopEase/
 
     ```bash
     # Ensure you have required dependencies
-    flutter pub add dio shared_preferences provider
+    flutter pub get
     ```
 
 2.  Configure the server address in the Flutter app if needed using the server configuration utilities.
