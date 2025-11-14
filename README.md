@@ -27,6 +27,18 @@ ShopEase is a comprehensive e-commerce mobile application designed to provide a 
 - Vendors seeking a platform to showcase and sell their products
 - Developers interested in a modern full-stack e-commerce implementation
 
+## Screenshots
+
+<p align="center">
+  <img src="assets/images/Accueil Client.png" width="30%" alt="Home Page - Customer View" />
+  <img src="assets/images/Creer Un Compte.png" width="30%" alt="Create Account Screen" />
+  <img src="assets/images/Ajouter Un Article.png" width="30%" alt="Add Product - Vendor View" />
+</p>
+
+<p align="center">
+  <em>Home Page showcasing products | User Registration | Vendor Product Management</em>
+</p>
+
 ## Overview
 
 ShopEase is a mobile application built with Flutter that uses a FastAPI backend. The backend leverages Firebase for authentication and data storage, providing a RESTful API for the Flutter frontend. The Flutter app does not interact directly with Firebase.
