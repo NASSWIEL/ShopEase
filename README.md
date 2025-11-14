@@ -30,9 +30,9 @@ ShopEase is a comprehensive e-commerce mobile application designed to provide a 
 ## Screenshots
 
 <p align="center">
-  <img src="assets/images/Accueil Client.png" width="30%" alt="Home Page - Customer View" />
-  <img src="assets/images/Creer Un Compte.png" width="30%" alt="Create Account Screen" />
-  <img src="assets/images/Ajouter Un Article.png" width="30%" alt="Add Product - Vendor View" />
+  <img src="assets/images/Accueil Client.png" width="30%" alt="Home Page - Customer View" style="border: 2px solid black;" />
+  <img src="assets/images/Creer Un Compte.png" width="30%" alt="Create Account Screen" style="border: 2px solid black;" />
+  <img src="assets/images/Ajouter Un Article.png" width="30%" alt="Add Product - Vendor View" style="border: 2px solid black;" />
 </p>
 
 <p align="center">
